@@ -117,6 +117,10 @@ public class SubscriptionHelper {
 	}
 
 	public static String activateProduct(String uid, String productId, HttpHeaders header) {
+            if (productId.equalsIgnoreCase("16000")) {
+                String offer_Ids = "[16000]";
+                return SubscriptionHelper.getOfferProvision(uid, offer_Ids, uid, header);
+            }
 		String response = "";
 		String bsbUrl = AppgridHelper.appGridMetadata.get("bsb_subscription_url").asString();
 		HttpHeaders bsbHeader = new HttpHeaders();
