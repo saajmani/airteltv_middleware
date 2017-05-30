@@ -590,7 +590,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 	}
 
 	@Override
-	public String activateProduct(String uid, String productId, String platform) {
+	public String activateProduct(String uid, String productId, String deviceId, String platform) {
 		String response = "Activated";
 		try {
 			if(!platform.isEmpty() && platform.equalsIgnoreCase("ios"))
@@ -599,7 +599,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 			}
 			else
 			{
-				SubscriptionHelper.activateProduct(uid, productId, headers);
+				response = SubscriptionHelper.activateProduct(uid, productId,deviceId, headers);
 				userProfileDao.setHooqTrialFlag(uid);
 			}
 		} catch (BusinessApplicationException e)

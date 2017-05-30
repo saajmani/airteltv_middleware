@@ -60,13 +60,16 @@ public class SubscriptionHelper {
 		}
 		return response;
 	}
-
-	public static String getOfferProvision(String uid, String offerIds, String deviceId, HttpHeaders header) {
+        
+        public static String getOfferProvision(String uid, String offerIds, String deviceId, HttpHeaders header) {
 		String response = "";
 		String bsbUrl = AppgridHelper.appGridMetadata.get("bsb_offer_url").asString();
 		String secretKey = AppgridHelper.appGridMetadata.get("bsb_provision_secrete_key").asString();
 		String appKey = AppgridHelper.appGridMetadata.get("bsb_provision_app_auth_key").asString();
 		String fromRequiest = AppgridHelper.appGridMetadata.get("bsb_offer_signature_data").asString();
+                if (!fromRequiest.contains("sync=true")) {
+                    fromRequiest = fromRequiest.concat("&sync=true");
+                }
 		HttpHeaders bsbHeader = new HttpHeaders();
 		try {
 			String currentTime = String.valueOf(System.currentTimeMillis());
@@ -81,6 +84,43 @@ public class SubscriptionHelper {
 			bsbHeader.set("x-bsy-date", currentTime);
 			response = Util.executeApiPostCall(bsbUrl, bsbHeader, payload);
 			log.info("BSB Response for GetOffer API for uid:" + uid + ", body:" + response);
+		} catch (HttpClientErrorException e) {
+			log.error("Error From BSB in GetOffer API: Code=" + e.getStatusCode().value() + ", Message="
+					+ e.getStatusText());
+			throw new BusinessApplicationException(e.getStatusCode().value(), e.getStatusText());
+		} catch (SignatureException e) {
+			throw new BusinessApplicationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), e,
+					"System encountered a Signature Exception");
+		} catch (Exception e) {
+			log.error("Error From BSB in GetOffer API: " + e);
+			throw new BusinessApplicationException(HttpStatus.FAILED_DEPENDENCY.value(), e);
+		}
+		return response;
+	}
+
+	public static String getavailableOffer(String uid, String deviceId) {
+		String response = "";
+		String bsbUrl =  "http://dev.wynk.in:8080/wynk/v1/s2s/offer/get/provision?service=video";
+		String secretKey = AppgridHelper.appGridMetadata.get("bsb_provision_secrete_key").asString();
+		String appKey = AppgridHelper.appGridMetadata.get("bsb_provision_app_auth_key").asString();
+		String fromRequiest = "POST/wynk/v1/s2s/offer/get/provision?service=video";
+                
+		HttpHeaders bsbHeader = new HttpHeaders();
+		try {
+			String currentTime = String.valueOf(System.currentTimeMillis());
+			String payload = AppgridHelper.appGridMetadata.get("bsb_provision_offer_payload_data").asString();
+                        payload = "{\"uid\": \"{0}\",\"os\":\"{1}\",\"deviceId\": \"{2}\"}";
+			payload = payload.replace("{0}", uid).replace("{1}", "ios").replace("{2}", deviceId);
+			fromRequiest = fromRequiest + payload + currentTime;
+			String signature = Signature.calculateRFC2104HMAC(fromRequiest, secretKey);
+			char col = ':';
+			bsbHeader.setContentType(MediaType.APPLICATION_JSON);
+			bsbHeader.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+			bsbHeader.set("x-bsy-atkn", appKey + col + signature);
+			bsbHeader.set("x-bsy-date", currentTime);
+                        bsbHeader.set("x-app-version", "1.5.2.0");
+			response = Util.executeApiPostCall(bsbUrl, bsbHeader, payload);
+			log.info("BSB Response for GetAvailableOffer API for uid:" + uid + ", body:" + response);
 		} catch (HttpClientErrorException e) {
 			log.error("Error From BSB in GetOffer API: Code=" + e.getStatusCode().value() + ", Message="
 					+ e.getStatusText());
@@ -116,10 +156,11 @@ public class SubscriptionHelper {
 		return response;
 	}
 
-	public static String activateProduct(String uid, String productId, HttpHeaders header) {
-            if (productId.equalsIgnoreCase("16000")) {
-                String offer_Ids = "[16000]";
-                return SubscriptionHelper.getOfferProvision(uid, offer_Ids, uid, header);
+	public static String activateProduct(String uid, String productId, String deviceId, HttpHeaders header) {
+            if (productId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
+								.asString())) {
+                String offer_Ids = "[9013]"; //TODO add the mapping into appgrid
+                return SubscriptionHelper.getOfferProvision(uid, offer_Ids, deviceId, header); //
             }
 		String response = "";
 		String bsbUrl = AppgridHelper.appGridMetadata.get("bsb_subscription_url").asString();
@@ -299,6 +340,7 @@ public class SubscriptionHelper {
 			JsonObject responseJson = JsonObject.readFrom(response);
 			JsonArray responseArray = responseJson.get("entries").asArray();
 			for (JsonValue responseObject : responseArray) {
+                            if (responseObject.asObject().get("productTags") != null) {
 				for (JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
 					if (cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
 						responseObject.asObject().set("contentProvider",
@@ -322,6 +364,7 @@ public class SubscriptionHelper {
 				allProductsArray = allProductArray;
 				allProductsMap = productsMapAll;
 			}
+                        }
 		} catch (HttpClientErrorException e) {
 			throw new BusinessApplicationException(e.getStatusCode().value(), e.getStatusText());
 		}

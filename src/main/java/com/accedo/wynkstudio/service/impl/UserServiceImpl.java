@@ -1570,8 +1570,9 @@ public class UserServiceImpl implements UserService {
 //						productIDForCards = productIDForCards.add(cardProducts.get(i).asString());
 //						System.out.println(cardProducts.get(i).asString());
 //						System.out.println(AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()));
-						if(cardProducts.get(i) != null &&  AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()) != null && AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString())!= null 
-								&& !AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()).isNull())
+						if(cardProducts.get(i) != null &&  AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()) != null 
+                                                        && AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString())!= null 
+							&& !AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()).isNull())
 						cardsArray = cardsArray.add(AppgridHelper.appGridCardConfiguration.get(cardProducts.get(i).asString()));
 					}
 				}
@@ -1608,8 +1609,6 @@ public class UserServiceImpl implements UserService {
 				log.error("Personalized Rails Error:" + e);
 			}
 
-			jsonObject.add("products", productsJsonArray);
-
 			JsonArray productsArray = new JsonArray();
 
 			for (int i = 0; i < productsJsonArray.size(); i++) {
@@ -1638,10 +1637,35 @@ public class UserServiceImpl implements UserService {
 								.asString()).asObject();
 				productsArray.add(prodObj);
 			}
-
 		
+                        String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId);
+                        JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
+                        if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
+                            JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
+                            for (int i = 0; i < offerstatus.size(); i++) {
+                                if (offerstatus.get(i).asObject().get("packs").asArray() != null &&
+                                        offerstatus.get(i).asObject().get("packs").asArray().size() > 0) {
+                                    JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
+                                    for (int j = 0; j < offerpacks.size(); j++) {
+                                        String offerId = offerpacks.get(j).asObject().get("partnerProductId").asString();
+                                        String action = offerpacks.get(j).asObject().get("action").asString();
+                                        if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
+								.asString()) && action.equalsIgnoreCase("PRE_AUTH")) {
+                                            productsJsonArray.add(offerId);
+                                            cardsArray.add(AppgridHelper.appGridCardConfiguration.get(offerId));
+                                            giftFlag = true;
+                                            JsonObject prodObj = SubscriptionHelper.allProductsMap.get(
+						AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
+								.asString()).asObject();
+                                            productsArray.add(prodObj);
+                                        }
+                                    }
+                                }
+                            }
+                        }
 			
 //			jsonObject.add("rails", railsArray);
+                        jsonObject.add("products", productsJsonArray);
 			jsonObject.add("rails", cardsArray);
 			jsonObject.add("messageKeys", getMsgKeys(productsJsonArray, userId, deviceId, airtel, showOffer));
 			jsonObject.add("productsArray", productsArray);

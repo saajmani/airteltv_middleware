@@ -81,12 +81,11 @@ public class SubscriptionManagementController {
 	@RequestMapping(value = "/activate", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
 	public @ResponseBody String activateProduct(@RequestParam("uid") String uid,
 			@RequestParam("productId") String productId, @RequestParam(value = "platform", required = false, defaultValue = "") String platform,
+                        @RequestParam(value = "deviceId", required = false, defaultValue = "") String deviceId,
 			HttpServletRequest request, HttpServletResponse response) {
-		String responseString = subscriptionDelegate.activateProduct(uid, productId, platform);
+		String responseString = subscriptionDelegate.activateProduct(uid, productId, deviceId, platform);
 		response.setHeader("Cache-Control", "no-cache");
 		return responseString;
 	}
-	
-	
 
 }

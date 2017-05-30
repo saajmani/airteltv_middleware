@@ -30,6 +30,7 @@
             "pricingTiers": {
               "0": {
                 "subscriptionUnits": "entries[#2].subscriptionUnit",
+                "productTags" : "entries[#2].productTags",
                 "amounts": {
                   "INR": "entries[#3].pricing[0].amount"
                 }
