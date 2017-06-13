@@ -32,10 +32,10 @@ public interface UserDelegate {
 
 	public String getRails(String userId, String token, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer);
 
-	public String getGiftInfo(String userId);
+	public String getGiftInfo(String userId, String token, String deviceId, String deviceOs, String appVersion);
 	
 	public String removeRecent(String userId, String assetId);
 	
-	public String getCards(String userId, String token, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer);
+	public String getCards(String userId, String token, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer, String deviceOs, String appVersion);
 
 }

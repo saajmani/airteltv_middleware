@@ -65,6 +65,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -364,11 +365,52 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 
-	public String getGiftProductsInfo(String userId) {
-		List<ProductVO> userProducts = productDao.getProductsByUserId(userId);
+	public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
 		JsonArray productsList = new JsonArray();
 		Boolean trialFlag = false;
-
+                String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
+                JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
+                if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
+                    JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
+                    for (int i = 0; i < offerstatus.size(); i++) {
+                        if (offerstatus.get(i).asObject().get("packs").asArray() != null &&
+                                offerstatus.get(i).asObject().get("packs").asArray().size() > 0) {
+                            JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
+                            for (int j = 0; j < offerpacks.size(); j++) {
+                                String offerId = offerpacks.get(j).asObject().get("partnerProductId").asString();
+                                String action = offerpacks.get(j).asObject().get("action").asString();
+                                if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
+                                    JsonObject product = JsonObject.readFrom(AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
+                                                .get("airteltv_premiumpack").asString());
+                                    if(action.equalsIgnoreCase("ACTIVE")) {
+                                        String bsbResponse = SubscriptionHelper.checkPackStatus(userId, token, headers);
+                                        JsonObject statusObject = JsonObject.readFrom(bsbResponse);
+                                        if (statusObject.get(offerId) != null) {
+                                            JsonObject offerObj = statusObject.get(offerId).asObject();
+                                            long validity = offerObj.get("expireTimestamp").asLong();
+                                            product.add("validity", String.valueOf(validity));
+                                            product.add("state", offerObj.get("status").asString());
+                                            product.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+                                            product.set("noOfDaysLeft", TimeUnit.MILLISECONDS.toDays(validity) - 
+                                                    TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
+                                        } else {
+                                            long validity = offerpacks.get(j).asObject().get("validTillDate").asLong();
+                                            product.add("validity", validity);
+                                            product.set("active", "false");
+                                            product.set("noOfDaysLeft", TimeUnit.MILLISECONDS.toDays(validity) - 
+                                                    TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
+                                        }
+                                    } else {
+                                        product.set("active", "false");
+                                    }
+                                    productsList.add(product);
+                                }
+                            }
+                        }
+                    }
+                }
+           
+                List<ProductVO> userProducts = productDao.getProductsByUserId(userId);
 		for (int i = 0; i < userProducts.size(); i++) {
 			if (userProducts.get(i).getCpId().equalsIgnoreCase("hooq")
 					|| userProducts.get(i).getCpId().equalsIgnoreCase("singtel")) {
@@ -431,8 +473,12 @@ public class UserServiceImpl implements UserService {
 					product.add("itemLimit", 0);
 					product.add("counter", 0);
 				}
-				product.add("productName", SubscriptionHelper.allProductsMap.get(userProducts.get(i).getProductId())
+                                if (SubscriptionHelper.allProductsMap.get(userProducts.get(i).getProductId()) != null) {
+                                    product.add("productName", SubscriptionHelper.allProductsMap.get(userProducts.get(i).getProductId())
 						.get("title"));
+                                } else {
+                                    product.add("productName", "");
+                                }
 				if (AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
 						.get(product.get("productId").asString()) != null
 						&& !AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
@@ -447,8 +493,7 @@ public class UserServiceImpl implements UserService {
 		}
 		
 
-		if (!trialFlag
-				&& (userProfileDao.getUserProfileByUserId(userId) == null || !userProfileDao.getHooqTrialFlag(userId))) {
+		if (!trialFlag && (userProfileDao.getUserProfileByUserId(userId) == null || !userProfileDao.getHooqTrialFlag(userId))) {
 
 			String userType = "";
 //			UserDerivedProfile existingUserDerivedProfile = mongoDBUserDerivedProfileDAO
@@ -478,8 +523,7 @@ public class UserServiceImpl implements UserService {
 
 			productsList.add(product);
 		}
-
-		return productsList.toString();
+                return productsList.toString();
 	}
 
 	public String getRails(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer) {
@@ -973,7 +1017,7 @@ public class UserServiceImpl implements UserService {
 			OfferVO offerVo = offerDao.getOfferByUserIdOfferId(uid, "9001");
 
 			if (offerVo == null || offerVo.getOfferValidity() < Util.getIST()) {
-				String offerResponseBSB = SubscriptionHelper.getOfferProvision(uid, offer_Ids, deviceId, headers);
+				String offerResponseBSB = SubscriptionHelper.getOfferProvision(uid, offer_Ids, deviceId, "", "", headers);
 				JsonObject offerResponse = JsonObject.readFrom(offerResponseBSB);
 				JsonObject moengagePayload = new JsonObject();
 				JsonArray actionsArray = new JsonArray();
@@ -1427,7 +1471,10 @@ public class UserServiceImpl implements UserService {
 		int limit = 0;
 		for (JsonValue cpProduct : cpProducts) {
 			if (cpProduct.asObject().get("id").asString().equalsIgnoreCase(productId)) {
+                            if (cpProduct.asObject().get("bundleLimit") != null)
 				limit = cpProduct.asObject().get("bundleLimit").asInt();
+                            else
+                                limit = 0;
 			}
 		}
 		return limit;
@@ -1500,7 +1547,7 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public String getCards(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId,
-			boolean showOffer) {
+			boolean showOffer, String deviceOs, String appVersion) {
 		log.info("Cards call for uid:" + userId);
 		String result = null;
 		try {
@@ -1533,7 +1580,7 @@ public class UserServiceImpl implements UserService {
 						subscriptionStatus = SubscriptionHelper.evaluateSubscriptionStatus(bsbProductObject,
 								key.getName());
 						if (subscriptionStatus.get("status").asBoolean()
-								&& subscriptionStatus.get("body").asObject().get("status").asString()
+								&& !subscriptionStatus.get("body").asObject().get("status").asString()
 										.equalsIgnoreCase("Active")) {
 							productsJsonArray.add(key.getName());
 							prd.add(Integer.parseInt(key.getName()));
@@ -1632,13 +1679,14 @@ public class UserServiceImpl implements UserService {
 			}
 			if (userProfileDao.getUserProfileByUserId(userId) == null || !userProfileDao.getHooqTrialFlag(userId)) {
 				giftFlag = true;
-				JsonObject prodObj = SubscriptionHelper.allProductsMap.get(
+				JsonValue prodObj = SubscriptionHelper.allProductsMap.get(
 						AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("hooq_prepaid_prod_id")
-								.asString()).asObject();
-				productsArray.add(prodObj);
+								.asString());
+                                if (prodObj != null)
+                                    productsArray.add(prodObj.asObject());
 			}
 		
-                        String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId);
+                        String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
                         JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
                         if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
                             JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
@@ -1654,9 +1702,7 @@ public class UserServiceImpl implements UserService {
                                             productsJsonArray.add(offerId);
                                             cardsArray.add(AppgridHelper.appGridCardConfiguration.get(offerId));
                                             giftFlag = true;
-                                            JsonObject prodObj = SubscriptionHelper.allProductsMap.get(
-						AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
-								.asString()).asObject();
+                                            JsonObject prodObj = SubscriptionHelper.allProductsMap.get(offerId).asObject();
                                             productsArray.add(prodObj);
                                         }
                                     }
@@ -1682,8 +1728,6 @@ public class UserServiceImpl implements UserService {
 			log.error("Rails Error:" + e);
 			throw new BusinessApplicationException(HttpStatus.NOT_FOUND.value(), "Some error occured!");
 		}
-		return result;
-		
+		return result;	
 	}
-
 }

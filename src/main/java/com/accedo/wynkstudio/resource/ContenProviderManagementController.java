@@ -29,7 +29,7 @@ import com.accedo.wynkstudio.delegate.ContentProviderDelegate;
 import com.accedo.wynkstudio.exception.BusinessApplicationException;
 
 @RestController
-@RequestMapping({ "v0.11/", "v1/", "v0.12/", "v0.13/" })
+@RequestMapping({ "v0.11/", "v1/", "v0.12/", "v0.13/"})
 public class ContenProviderManagementController {
 	
 	final Logger log = LoggerFactory.getLogger(this.getClass());

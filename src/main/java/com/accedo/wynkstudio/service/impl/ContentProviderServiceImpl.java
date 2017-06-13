@@ -67,7 +67,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 	public void init() {
 		ContentProviderRegisterService.setContentProvider(
 				messageSource.getMessage(CPConstants.WYNKSTUDIO_CP_TOKEN_CONTENTPROVIDER, null, "", Locale.ENGLISH),
-				(ContentProviderService) this);
+				this);
 		headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
@@ -330,12 +330,12 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		String response = "";
 		try {
 			cpId = (cpId != null) ? cpId : "";
-			String feedsString = (platform != null
-					&& !platform.isEmpty()
-					&& platform.equalsIgnoreCase(messageSource.getMessage(
-							CPConstants.WYNKSTUDIO_SUBSCRIPTION_PLATFORM_IOS, null, "", Locale.ENGLISH)) ? AppgridHelper.appGridMetadata
-					.get("subscription_feed_ios").asString() : AppgridHelper.appGridMetadata.get("subscription_feed")
-					.asString())
+			String feedsString = (platform != null && !platform.isEmpty()
+					&& platform.equalsIgnoreCase(messageSource
+							.getMessage(CPConstants.WYNKSTUDIO_SUBSCRIPTION_PLATFORM_IOS, null, "", Locale.ENGLISH))
+									? AppgridHelper.appGridMetadata
+                                                                                .get("subscription_feed_ios").asString()
+									: AppgridHelper.appGridMetadata.get("subscription_feed").asString())
 					+ "?byProductTags=" + cpId;
 			response = Util.executeApiGetCall(feedsString);
 			response = response.replace("pl2$bundleFlag", "bundleFlag").replace("pl2$bundleLimit", "bundleLimit")
@@ -351,7 +351,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 			JsonArray longDescriptionJsonArray = null;
 			for (JsonValue responseObject : responseArray) {
 				for (JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
-					if (cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
+					if (cpObject.isObject() && cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
 						responseObject.asObject().set("contentProvider",
 								cpObject.asObject().get("title").asString().toUpperCase());
 				}
@@ -401,6 +401,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		JsonArray finalArray = new JsonArray();
 		JsonArray sonyArray = new JsonArray();
 		JsonArray erosArray = new JsonArray();
+                JsonArray airtelArray = new JsonArray();
 		JsonArray singtelArray = new JsonArray();
 		String cps[] = new String[3];
 		HashMap<String, JsonArray> cpProductsMap = new HashMap<String, JsonArray>();
@@ -416,13 +417,24 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 			case "EROSNOW":
 				erosArray.add(entry);
 				break;
+                        case "AIRTEL":
+                                airtelArray.add(entry);
+                                break;
 			}
 		}
 
 		if (singtelArray.size() > 0) {
 			if (!platform.equalsIgnoreCase("ios") && userProfileDao.getHooqTrialFlag(uid)) {
-				singtelArray.remove(0);
-				singtelArray.remove(0);
+//                            removing hooq 14days trial pack based on id
+                              for (int i =0; i < singtelArray.size(); i++) {
+                                  if (singtelArray.get(i).asObject().get("id").asString().equalsIgnoreCase("12906")){
+                                      singtelArray.remove(i);
+                                      break;
+                                  }
+                              }
+//                            this removes hooq monthly pack as well, so commenting
+//				singtelArray.remove(0);
+//				singtelArray.remove(0); 
 			} else if (platform.equalsIgnoreCase("ios")) {
 				if (userProfileDao.getHooqTrialFlagIos(uid)) {
 					singtelArray.get(0).asObject().set("trialFlag", false);
@@ -441,6 +453,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		cpProductsMap.put("EROSNOW", erosArray);
 		cpProductsMap.put("SINGTEL", singtelArray);
 		cpProductsMap.put("SONYLIV", sonyArray);
+                cpProductsMap.put("AIRTEL", airtelArray);
 		String cpList = "";
 
 		// Find Live products and make a list of product Ids
@@ -470,26 +483,26 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		if (cpList.contains("EROSNOW")) {
 			if (cpList.contains("SINGTEL")) {
 				if (cpList.contains("SONYLIV")) {
-					cpList = "EROSNOW_SINGTEL_SONYLIV";
+					cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
 				} else {
-					cpList = "SONYLIV_EROSNOW_SINGTEL";
+					cpList = "SONYLIV_EROSNOW_SINGTEL_AIRTEL";
 				}
 			} else if (cpList.contains("SONYLIV")) {
-				cpList = "SINGTEL_EROSNOW_SONYLIV";
+				cpList = "SINGTEL_EROSNOW_SONYLIV_AIRTEL";
 			} else {
-				cpList = "SINGTEL_SONYLIV_EROSNOW";
+				cpList = "SINGTEL_SONYLIV_EROSNOW_AIRTEL";
 			}
 		} else {
 			if (cpList.contains("SONYLIV")) {
 				if (cpList.contains("SINGTEL")) {
-					cpList = "EROSNOW_SINGTEL_SONYLIV";
+					cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
 				} else {
-					cpList = "SONYLIV_EROSNOW_SINGTEL";
+					cpList = "SONYLIV_EROSNOW_SINGTEL_AIRTEL";
 				}
 			} else if (cpList.contains("SINGTEL")) {
-				cpList = "EROSNOW_SONYLIV_SINGTEL";
+				cpList = "EROSNOW_SONYLIV_SINGTEL_AIRTEL";
 			} else {
-				cpList = "EROSNOW_SINGTEL_SONYLIV";
+				cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
 			}
 		}
 
@@ -925,7 +938,8 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 	}
 	
 	
-	public byte[] getAssetsForNewVersion(String dpi) {
+	@Override
+    public byte[] getAssetsForNewVersion(String dpi) {
 		switch (dpi) {
 		case "hdpi":
 			return AppgridHelper.newAssetsZipHdpi = AppgridHelper.newAssetsZipHdpi != null ? AppgridHelper.newAssetsZipHdpi
@@ -967,7 +981,8 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		return "success";
 	}
 
-	@SuppressWarnings("static-access")
+	@Override
+    @SuppressWarnings("static-access")
 	public String refreshAssets() {
 		JsonArray assetsJsonArray = new JsonArray().readFrom(AppgridHelper.appGridMetadata.get("server_refresh_api")
 				.asObject().get("refresh_assets").asString());

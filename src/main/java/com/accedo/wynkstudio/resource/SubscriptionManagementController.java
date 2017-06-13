@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.accedo.wynkstudio.delegate.SubscriptionDelegate;
 
 @RestController
-@RequestMapping({ "v0.11/", "v1/", "v0.12/", "v0.13/", "v0.14/", "v0.15/", "v0.16/" })
+@RequestMapping({ "v0.11/", "v1/", "v0.12/", "v0.13/", "v0.14/", "v0.15/", "v0.16/", "v0.17/", "v0.18/"})
 public class SubscriptionManagementController {
 	
 	final Logger log = LoggerFactory.getLogger(this.getClass());
@@ -28,7 +28,6 @@ public class SubscriptionManagementController {
 	@Autowired
 	private MessageSource messageSource;
 
-	
 	/* Payment Success */
 
 	@RequestMapping(value = "/subscribe", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
@@ -80,10 +79,15 @@ public class SubscriptionManagementController {
 
 	@RequestMapping(value = "/activate", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
 	public @ResponseBody String activateProduct(@RequestParam("uid") String uid,
-			@RequestParam("productId") String productId, @RequestParam(value = "platform", required = false, defaultValue = "") String platform,
+                        @RequestParam(value = "token", required = false, defaultValue = "") String token,
+			@RequestParam("productId") String productId, 
+                        @RequestParam(value = "cpId", required = false, defaultValue = "") String cpId,
+                        @RequestParam(value = "platform", required = false, defaultValue = "") String platform,
                         @RequestParam(value = "deviceId", required = false, defaultValue = "") String deviceId,
+                        @RequestParam(value = "os", required = false, defaultValue = "") String deviceOs,
+                        @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
 			HttpServletRequest request, HttpServletResponse response) {
-		String responseString = subscriptionDelegate.activateProduct(uid, productId, deviceId, platform);
+		String responseString = subscriptionDelegate.activateProduct(uid, token, productId, cpId, deviceId, platform, deviceOs, appVersion);
 		response.setHeader("Cache-Control", "no-cache");
 		return responseString;
 	}

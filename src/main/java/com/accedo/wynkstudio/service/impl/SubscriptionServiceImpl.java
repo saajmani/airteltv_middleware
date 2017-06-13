@@ -477,7 +477,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 					JsonArray cpArray = responseArray.get(i).asObject().get("productTags").asArray();
 					String cp = "";
 					for (int j = 0; j < cpArray.size(); j++) {
-						if (cpArray.get(j).asObject().get("scheme").asString().equalsIgnoreCase("provider")) {
+						if (cpArray.get(j).isObject() && cpArray.get(j).asObject().get("scheme").asString().equalsIgnoreCase("provider")) {
 							cp = cpArray.get(j).asObject().get("title").asString();
 
 						}
@@ -490,7 +490,20 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 							.set("enabled", buttonMap.get(pId) != null ? buttonMap.get(pId) : true);
 					if (SubscriptionHelper.bundleCheck(pId)) {
 						limit = getBundleStatus(pId, uid);
-					}
+					}  
+                                        
+                                        if (responseArray.get(i).asObject().get("longDescription") != null) {
+                                            String[] longDescription = responseArray.get(i).asObject().get("longDescription").asString().split("~");
+                                            JsonArray longDescriptionJsonArray = new JsonArray();
+                                            if (longDescription.length > 0) {
+                                                    for (int d = 0; d < longDescription.length; d++) {
+                                                            if (!longDescription[d].isEmpty()) {
+                                                                    longDescriptionJsonArray.add(longDescription[d]);
+                                                            }
+                                                    }
+                                            }
+                                            responseArray.get(i).asObject().set("longDescription", longDescriptionJsonArray);
+                                        }
 					responseArray.get(i).asObject().set("bundleCounter", limit);
 				}
 				responseJson.set("entries", responseArray);
@@ -590,30 +603,86 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 	}
 
 	@Override
-	public String activateProduct(String uid, String productId, String deviceId, String platform) {
-		String response = "Activated";
-		try {
-			if(!platform.isEmpty() && platform.equalsIgnoreCase("ios"))
-			{
-				userProfileDao.setHooqTrialFlagIos(uid);
-			}
-			else
-			{
-				response = SubscriptionHelper.activateProduct(uid, productId,deviceId, headers);
-				userProfileDao.setHooqTrialFlag(uid);
-			}
-		} catch (BusinessApplicationException e)
-		{
-			log.error("Error From BSB: ", e);
-			throw new BusinessApplicationException(HttpStatus.FAILED_DEPENDENCY.value(), "Error From BSB Provision Call");
-		}
-		catch (Exception e)
-		{
-			log.error("Subscription Error Log: ", e);
-			throw new BusinessApplicationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Some error occured!");
-		}
-
-		return response;
+	public String activateProduct(String uid, String tokenString, String productId, String cpId, String deviceId, String platform, String deviceOs, String appVersion) {
+            String response = "Activated";
+            try {
+                if(!platform.isEmpty() && platform.equalsIgnoreCase("ios"))
+                {
+                    userProfileDao.setHooqTrialFlagIos(uid);
+                }
+                else
+                {
+                    response = SubscriptionHelper.activateProduct(uid, productId, deviceId, deviceOs, appVersion, headers);
+//                   if (AppgridHelper.appGridMetadata.get("bsb_flag").toString().equalsIgnoreCase("\"true\"")) {
+//                            String bsbResponse = SubscriptionHelper.checkPackStatus(uid, tokenString, headers);
+//                            JsonObject statusObject = JsonObject.readFrom(bsbResponse);
+//                            JsonObject productObject = (statusObject.get(productId) != null && !statusObject.get(productId)
+//                                            .isNull()) ? statusObject.get(productId).asObject() : null;
+//                            if (productObject != null && !productObject.isNull()) {
+//                                    JsonObject subscriptionStatus = new JsonObject();
+//                                    subscriptionStatus = SubscriptionHelper.evaluateSubscriptionStatus(productObject, productId);
+//                                    long bsbValidity = productObject.get("expireTimestamp").asLong();
+//
+//                                    long monthInMs = 0;
+//                                    long contentValidity = System.currentTimeMillis() + monthInMs;
+//                                    if (SubscriptionHelper.allProductsMap.get(productId).asObject().get("productCycle") != null) {
+//                                        int productCycle = SubscriptionHelper.allProductsMap.get(productId).asObject().get("productCycle").asInt();
+//                                        if(productCycle == 1)
+//                                        {
+//                                            monthInMs = (long) 86400000.00;
+//                                        }
+//                                        else if(productCycle == 7)
+//                                        {
+//                                            monthInMs = (long) 604800000.00;
+//                                        }
+//                                        else
+//                                        {
+//                                            monthInMs = (long) 2592000000.00;
+//                                        }
+//                                    } else {
+//                                        monthInMs = (long) 2592000000.00;
+//                                    }
+//
+//                                    contentValidity = System.currentTimeMillis() + monthInMs;
+//
+//                                    boolean bundleFlag = (SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag") != null && 
+//                                            !SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag").isNull()) ? 
+//                                            SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag").asBoolean() : false;
+//                                    String productType = "";
+//                                    if (SubscriptionHelper.allProductsMap.get(productId).asObject().get("productType") != null) {
+//                                        productType = SubscriptionHelper.allProductsMap.get(productId).asObject().get("productType").asString();
+//                                    }
+//                                    if (subscriptionStatus.get("status").asBoolean()) {
+//                                        addProduct(uid, productId, cpId, productType, bundleFlag, bsbValidity, contentValidity, headers, subscriptionStatus.get("body").asObject());
+//                                        productDao.updateProductActive(uid, productId, true);
+//                                        response = "{\"code\":200, \"message\":\"Activated\"}";
+//                                    } else {
+//                                        deleteProduct(uid, productId);
+//                                        productDao.updateProductLiv(uid, cpId, true);
+//                                        response = "{\"code\":200, \"message\":\"Activate Failure\"}";
+//                                    }
+//                            } else {
+//                                    deleteProduct(uid, productId);
+//                                    productDao.updateProductLiv(uid, cpId, true);
+//                                    response = "{\"code\":200, \"message\":\"Activate Failure\"}";
+//                            }
+//                    } else {
+//                            addProduct(uid, productId, cpId, "prime", true, System.currentTimeMillis(), System.currentTimeMillis(), headers, null);
+//                            response = "{\"code\":200, \"message\":\"Subscription Successful\"}";
+//                    }
+                    userProfileDao.setHooqTrialFlag(uid);
+                }
+            } catch (BusinessApplicationException e)
+            {
+                log.error("Error From BSB: ", e);
+                throw new BusinessApplicationException(HttpStatus.FAILED_DEPENDENCY.value(), "Error From BSB Provision Call");
+            }
+            catch (Exception e)
+            {
+                log.error("Subscription Error Log: ", e);
+                throw new BusinessApplicationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Some error occured!");
+            }
+            return response;
 	}
 
 }

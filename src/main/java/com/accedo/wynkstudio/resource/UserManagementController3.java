@@ -33,6 +33,8 @@ public class UserManagementController3 extends UserManagementController{
 			@RequestParam(value = "uId", required = false) String uId,@RequestParam(value = "token", required = false) String token,
 			@RequestParam(value = "airtel", required = false) Boolean airtel,
 			@RequestParam(value = "deviceId", required = false) String deviceId,
+                        @RequestParam(value = "os", required = false, defaultValue = "") String deviceOs,
+                        @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
 			HttpServletResponse response) {
 		userId = (userId == null || userId.isEmpty()) ? uId : userId;
 		token = (token == null || token.isEmpty()) ? "" : token;

@@ -83,8 +83,8 @@ public class UserDelegateImpl implements UserDelegate {
 	}
 
 	@Override
-	public String getGiftInfo(String userId) {
-		return userService.getGiftProductsInfo(userId);
+	public String getGiftInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
+		return userService.getGiftProductsInfo(userId, token, deviceId, deviceOs, appVersion);
 	}
 
 	@Override
@@ -94,7 +94,7 @@ public class UserDelegateImpl implements UserDelegate {
 
 	@Override
 	public String getCards(String userId, String token, Boolean airtel, String bsbResponse, String deviceId,
-			boolean showOffer) {
-		return userService.getCards(userId, token, airtel, bsbResponse, deviceId, showOffer);
+			boolean showOffer, String deviceOs, String appVersion) {
+		return userService.getCards(userId, token, airtel, bsbResponse, deviceId, showOffer, deviceOs, appVersion);
 	}
 }

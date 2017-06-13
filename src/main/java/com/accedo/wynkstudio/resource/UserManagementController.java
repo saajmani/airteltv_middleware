@@ -144,11 +144,16 @@ public class UserManagementController {
 	}
 	
 	@RequestMapping(value = "/gift/info", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
-	public @ResponseBody String getGiftInfo(@RequestParam(value = "uid", required = false) String userId, HttpServletResponse response) {
-		String responseString = userDelegate.getGiftInfo(userId);
-		response.setHeader("Cache-Control", "no-cache");
-		return responseString;
-	}
+        public @ResponseBody String getGiftInfo(@RequestParam(value = "uid", required = false) String userId, 
+                @RequestParam(value = "token", required = false, defaultValue = "") String token,
+                @RequestParam(value = "deviceId", required = false, defaultValue = "") String deviceId,
+                @RequestParam(value = "os", required = false, defaultValue = "") String deviceOs,
+                @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
+                HttpServletResponse response) {
+                String responseString = userDelegate.getGiftInfo(userId, token, deviceId, deviceOs, appVersion);
+                response.setHeader("Cache-Control", "no-cache");
+                return responseString;
+        }
 
 
 	/* MPX Trusted Auth SignIn */
@@ -166,6 +171,8 @@ public class UserManagementController {
 			@RequestParam(value = "uId", required = false) String uId,@RequestParam(value = "token", required = false) String token,
 			@RequestParam(value = "airtel", required = false) Boolean airtel,
 			@RequestParam(value = "deviceId", required = false) String deviceId,
+                        @RequestParam(value = "os", required = false, defaultValue = "") String deviceOs,
+                        @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
 			HttpServletResponse response) {
 		userId = (userId == null || userId.isEmpty()) ? uId : userId;
 		token = (token == null || token.isEmpty()) ? "" : token;

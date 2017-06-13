@@ -10,6 +10,6 @@ public interface SubscriptionDelegate {
 
 	public String setEntitlementsByBsb(String uid, String product, String contextPath, String token, String cpId);
 
-	public String activateProduct(String uid, String productId, String deviceId, String platform);
+	public String activateProduct(String uid, String tokenString, String productId, String cpId, String deviceId, String platform, String deviceOs, String appVersion);
 
 }

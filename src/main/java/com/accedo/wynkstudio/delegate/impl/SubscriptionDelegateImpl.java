@@ -34,8 +34,8 @@ public class SubscriptionDelegateImpl implements SubscriptionDelegate {
 	}
 
 	@Override
-	public String activateProduct(String uid, String productId, String deviceId, String platform) {
-		return subscriptionService.activateProduct(uid, productId, deviceId, platform);
+	public String activateProduct(String uid, String tokenString, String productId, String cpId, String deviceId, String platform, String deviceOs, String appVersion) {
+		return subscriptionService.activateProduct(uid, tokenString, productId, cpId, deviceId, platform, deviceOs, appVersion);
 	}
 
 }
