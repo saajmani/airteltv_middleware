@@ -426,6 +426,10 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 						subscriptionStatus = SubscriptionHelper.evaluateSubscriptionStatus(bsbProductObject, productId);
 						if (subscriptionStatus.get("status").asBoolean()) {
 							productFromDb = productDao.getProductByUserWithProductId(productId, uid);
+                                                        if (productId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
+								.asString()) && productFromDb != null) {
+                                                            productFromDb.setActive(true);
+                                                        }
 							if (productFromDb != null && productFromDb.getActive()) {
 								productArray.add(productId);
 								appendIds = appendIds + productId + "|";

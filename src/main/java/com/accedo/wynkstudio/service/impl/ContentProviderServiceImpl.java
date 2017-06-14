@@ -483,26 +483,26 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		if (cpList.contains("EROSNOW")) {
 			if (cpList.contains("SINGTEL")) {
 				if (cpList.contains("SONYLIV")) {
-					cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
+					cpList = "AIRTEL_EROSNOW_SINGTEL_SONYLIV";
 				} else {
-					cpList = "SONYLIV_EROSNOW_SINGTEL_AIRTEL";
+					cpList = "AIRTEL_SONYLIV_EROSNOW_SINGTEL";
 				}
 			} else if (cpList.contains("SONYLIV")) {
-				cpList = "SINGTEL_EROSNOW_SONYLIV_AIRTEL";
+				cpList = "AIRTEL_SINGTEL_EROSNOW_SONYLIV";
 			} else {
-				cpList = "SINGTEL_SONYLIV_EROSNOW_AIRTEL";
+				cpList = "AIRTEL_SINGTEL_SONYLIV_EROSNOW";
 			}
 		} else {
 			if (cpList.contains("SONYLIV")) {
 				if (cpList.contains("SINGTEL")) {
-					cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
+					cpList = "AIRTEL_EROSNOW_SINGTEL_SONYLIV";
 				} else {
-					cpList = "SONYLIV_EROSNOW_SINGTEL_AIRTEL";
+					cpList = "AIRTEL_SONYLIV_EROSNOW_SINGTEL";
 				}
 			} else if (cpList.contains("SINGTEL")) {
-				cpList = "EROSNOW_SONYLIV_SINGTEL_AIRTEL";
+				cpList = "AIRTEL_EROSNOW_SONYLIV_SINGTEL";
 			} else {
-				cpList = "EROSNOW_SINGTEL_SONYLIV_AIRTEL";
+				cpList = "AIRTEL_EROSNOW_SINGTEL_SONYLIV";
 			}
 		}
 
