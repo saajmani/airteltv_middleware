@@ -610,72 +610,16 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 	public String activateProduct(String uid, String tokenString, String productId, String cpId, String deviceId, String platform, String deviceOs, String appVersion) {
             String response = "Activated";
             try {
-                if(!platform.isEmpty() && platform.equalsIgnoreCase("ios"))
-                {
-                    userProfileDao.setHooqTrialFlagIos(uid);
-                }
-                else
-                {
+                
                     response = SubscriptionHelper.activateProduct(uid, productId, deviceId, deviceOs, appVersion, headers);
-//                   if (AppgridHelper.appGridMetadata.get("bsb_flag").toString().equalsIgnoreCase("\"true\"")) {
-//                            String bsbResponse = SubscriptionHelper.checkPackStatus(uid, tokenString, headers);
-//                            JsonObject statusObject = JsonObject.readFrom(bsbResponse);
-//                            JsonObject productObject = (statusObject.get(productId) != null && !statusObject.get(productId)
-//                                            .isNull()) ? statusObject.get(productId).asObject() : null;
-//                            if (productObject != null && !productObject.isNull()) {
-//                                    JsonObject subscriptionStatus = new JsonObject();
-//                                    subscriptionStatus = SubscriptionHelper.evaluateSubscriptionStatus(productObject, productId);
-//                                    long bsbValidity = productObject.get("expireTimestamp").asLong();
-//
-//                                    long monthInMs = 0;
-//                                    long contentValidity = System.currentTimeMillis() + monthInMs;
-//                                    if (SubscriptionHelper.allProductsMap.get(productId).asObject().get("productCycle") != null) {
-//                                        int productCycle = SubscriptionHelper.allProductsMap.get(productId).asObject().get("productCycle").asInt();
-//                                        if(productCycle == 1)
-//                                        {
-//                                            monthInMs = (long) 86400000.00;
-//                                        }
-//                                        else if(productCycle == 7)
-//                                        {
-//                                            monthInMs = (long) 604800000.00;
-//                                        }
-//                                        else
-//                                        {
-//                                            monthInMs = (long) 2592000000.00;
-//                                        }
-//                                    } else {
-//                                        monthInMs = (long) 2592000000.00;
-//                                    }
-//
-//                                    contentValidity = System.currentTimeMillis() + monthInMs;
-//
-//                                    boolean bundleFlag = (SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag") != null && 
-//                                            !SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag").isNull()) ? 
-//                                            SubscriptionHelper.allProductsMap.get(productId).asObject().get("bundleFlag").asBoolean() : false;
-//                                    String productType = "";
-//                                    if (SubscriptionHelper.allProductsMap.get(productId).asObject().get("productType") != null) {
-//                                        productType = SubscriptionHelper.allProductsMap.get(productId).asObject().get("productType").asString();
-//                                    }
-//                                    if (subscriptionStatus.get("status").asBoolean()) {
-//                                        addProduct(uid, productId, cpId, productType, bundleFlag, bsbValidity, contentValidity, headers, subscriptionStatus.get("body").asObject());
-//                                        productDao.updateProductActive(uid, productId, true);
-//                                        response = "{\"code\":200, \"message\":\"Activated\"}";
-//                                    } else {
-//                                        deleteProduct(uid, productId);
-//                                        productDao.updateProductLiv(uid, cpId, true);
-//                                        response = "{\"code\":200, \"message\":\"Activate Failure\"}";
-//                                    }
-//                            } else {
-//                                    deleteProduct(uid, productId);
-//                                    productDao.updateProductLiv(uid, cpId, true);
-//                                    response = "{\"code\":200, \"message\":\"Activate Failure\"}";
-//                            }
-//                    } else {
-//                            addProduct(uid, productId, cpId, "prime", true, System.currentTimeMillis(), System.currentTimeMillis(), headers, null);
-//                            response = "{\"code\":200, \"message\":\"Subscription Successful\"}";
-//                    }
-                    userProfileDao.setHooqTrialFlag(uid);
-                }
+                    if(!platform.isEmpty() && platform.equalsIgnoreCase("ios"))
+                    {
+                        userProfileDao.setHooqTrialFlagIos(uid);
+                    }
+                    else
+                    {
+                        userProfileDao.setHooqTrialFlag(uid);
+                    }
             } catch (BusinessApplicationException e)
             {
                 log.error("Error From BSB: ", e);

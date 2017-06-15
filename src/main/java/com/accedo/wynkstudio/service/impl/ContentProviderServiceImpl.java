@@ -348,6 +348,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 			response = JsonTransformation.transformJson(response, "/jsonSpec/mpx/plans.json");
 			JsonObject responseJson = JsonObject.readFrom(response);
 			JsonArray responseArray = responseJson.get("entries").asArray();
+                        JsonArray availableOffers = new JsonArray();
 			JsonArray longDescriptionJsonArray = null;
 			for (JsonValue responseObject : responseArray) {
 				for (JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
@@ -377,8 +378,27 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 				}
 			
 				responseObject.asObject().set("longDescription", longDescriptionJsonArray);
+                                // Add airtel infinity pack only for Airtel postpaid user
+                                String bsbProfile = SubscriptionHelper.getUserProfile(uid, headers);
+
+                                // Get circle and userType
+                                JsonObject profileObject = JsonObject.readFrom(bsbProfile);
+                                String userOperator = (profileObject.get("operator") != null && !profileObject.get("operator").isNull()) ? profileObject
+                                                .get("operator").asString() : "";
+                                String userType = (profileObject.get("userType") != null && !profileObject.get("userType").isNull()) ? profileObject
+                                                .get("userType").asString() : "";
+                                if (responseObject.asObject().get("id").asString().equalsIgnoreCase(AppgridHelper.appGridMetadata.
+                                        get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
+                                    if(userType.equalsIgnoreCase("POSTPAID") && userOperator.equalsIgnoreCase("AIRTEL")){
+                                    availableOffers.add(responseObject);
+                                    }
+                                } else {
+                                    availableOffers.add(responseObject);
+                                }
 			}
-			responseJson.set("entries", responseArray);
+                        
+                        
+			responseJson.set("entries", availableOffers);
 
 			if (!uid.isEmpty() && !token.isEmpty()) {
 				response = getUserSpecificPlans(responseJson, uid, token, platform);

@@ -456,7 +456,7 @@ public class UserServiceImpl implements UserService {
 						product.add("validity", userProducts.get(i).getContentValidity());
 						noOfDaysLeft = (cpDays == 30 ? 29 : cpDays);
 					} else {
-						product.add("validity", Util.getIST() + 2592000000.00);
+						product.add("validity", userProducts.get(i).getContentValidity());
 						noOfDaysLeft = 29;
 					}
 				}
