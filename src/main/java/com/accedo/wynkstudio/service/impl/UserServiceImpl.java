@@ -138,7 +138,7 @@ public class UserServiceImpl implements UserService {
 
 	/* Get User Profile from AppGrid */
 	@Override
-	public String getUserById(String userId, String contextPath, String token, String deviceId) {
+	public String getUserById(String userId, String contextPath, String token, String deviceId, String platform, String appVersion) {
 		String response = "";
 		JsonObject mpxJson = new JsonObject();
 		ObjectMapper mapper = new ObjectMapper();
@@ -159,9 +159,85 @@ public class UserServiceImpl implements UserService {
 					mpxToken = mpxJson.get("signInResponse").asObject().get("token").asString();
 				}
 				userProfileVO = userProfileDao.getUserProfileByUserId(userId);
+                                //Adding Airtel infinity pack for an Airtel postpaid user
+                                JsonObject airtelProduct = null;
+                                JsonObject statusObject = JsonObject.readFrom(bsbResponse);
+                                String airtelOfferId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString();
+                                if (statusObject.get(airtelOfferId) != null
+                                        && statusObject.get(airtelOfferId).asObject().get("status").asString().equalsIgnoreCase("DEACTIVATED")) {
+                                    airtelProduct = SubscriptionHelper.allProductsMap.get(airtelOfferId);
+                                    JsonObject offerObj = statusObject.get(airtelOfferId).asObject();
+                                    long validity = offerObj.get("expireTimestamp").asLong();
+                                    airtelProduct.add("validity", String.valueOf(validity));
+                                    airtelProduct.set("state", offerObj.get("status").asString());
+                                    airtelProduct.set("live", "true");
+                                    airtelProduct.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+                                } else if (!platform.isEmpty() && !appVersion.isEmpty()) {
+                                    String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, platform, appVersion);
+                                    JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
+                                    if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
+                                        JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
+                                        for (int i = 0; i < offerstatus.size(); i++) {
+                                            if (offerstatus.get(i).asObject().get("packs").asArray() != null &&
+                                                    offerstatus.get(i).asObject().get("packs").asArray().size() > 0) {
+                                                JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
+                                                JsonArray subPacks = new JsonArray();
+
+                                                for (int j = 0; j < offerpacks.size(); j++) {
+                                                    String offerId = offerpacks.get(j).asObject().get("partnerProductId").asString();
+                                                    String action = offerpacks.get(j).asObject().get("action").asString();
+
+                                                    if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
+                                                        airtelProduct = airtelProduct = SubscriptionHelper.allProductsMap.get(airtelOfferId);
+                                                        for (int k = 0; k < offerpacks.size(); k++) {
+                                                            if(offerpacks.get(k).asObject().get("cpName") != null)
+                                                                subPacks.add(offerpacks.get(k).asObject().get("cpName"));
+                                                        }
+                                                        if (subPacks.size() > 0) {
+                                                            airtelProduct.add("subPackCpIds", subPacks);
+                                                        }
+                                                        if(action.equalsIgnoreCase("ACTIVE")) {
+                                                            if (statusObject.get(offerId) != null) {
+                                                                JsonObject offerObj = statusObject.get(offerId).asObject();
+                                                                long validity = offerObj.get("expireTimestamp").asLong();
+                                                                airtelProduct.add("validity", String.valueOf(validity));
+                                                                airtelProduct.set("state", offerObj.get("status").asString());
+                                                                airtelProduct.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+                                                                airtelProduct.set("noOfDaysLeft", TimeUnit.MILLISECONDS.toDays(validity) - 
+                                                                        TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
+                                                            } else {
+                                                                long validity = offerpacks.get(j).asObject().get("validTillDate").asLong();
+                                                                airtelProduct.add("validity", validity);
+                                                                airtelProduct.set("active", "false");
+                                                                airtelProduct.set("noOfDaysLeft", TimeUnit.MILLISECONDS.toDays(validity) - 
+                                                                        TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
+                                                            }
+                                                        } else {
+                                                            airtelProduct.set("active", "false");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
 				Object json = mapper.readValue(mapper.writeValueAsString(userProfileVO), UserProfileVO.class);
 				response = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
 				JsonObject rspJson = JsonObject.readFrom(response);
+                                if (airtelProduct != null) {
+                                    JsonArray sbChannel = rspJson.get("subscribedChannels").asArray();
+                                    boolean hasProd = false;
+                                    for (JsonValue ch : sbChannel) {
+                                        if (ch.asObject().get("productId").asString().equalsIgnoreCase(AppgridHelper.appGridMetadata.
+                                                get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
+                                            hasProd = true;
+                                            break;
+                                        }                                            
+                                    }
+                                    if (!hasProd) {
+                                        sbChannel.add(airtelProduct);
+                                    }
+                                }
 				if (!mpxToken.isEmpty()) {
 					rspJson.set("mpxToken", mpxToken);
 				} else {
@@ -367,10 +443,23 @@ public class UserServiceImpl implements UserService {
 	public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
 		JsonArray productsList = new JsonArray();
 		Boolean trialFlag = false;
+                String bsbResponse = SubscriptionHelper.checkPackStatus(userId, token, headers);
+                JsonObject statusObject = JsonObject.readFrom(bsbResponse);
                 String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
                 JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
                 JsonObject airtelProduct;
-                if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
+                String airtelOfferId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString();
+                if (statusObject.get(airtelOfferId) != null
+                        && statusObject.get(airtelOfferId).asObject().get("status").asString().equalsIgnoreCase("DEACTIVATED")) {
+                    airtelProduct = JsonObject.readFrom(AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
+                                                .get("airteltv_premiumpack").asString());
+                    JsonObject offerObj = statusObject.get(airtelOfferId).asObject();
+                    long validity = offerObj.get("expireTimestamp").asLong();
+                    airtelProduct.add("validity", String.valueOf(validity));
+                    airtelProduct.set("state", offerObj.get("status").asString());
+                    airtelProduct.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+                    productsList.add(airtelProduct);
+                } else if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
                     JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
                     for (int i = 0; i < offerstatus.size(); i++) {
                         if (offerstatus.get(i).asObject().get("packs").asArray() != null &&
@@ -393,8 +482,6 @@ public class UserServiceImpl implements UserService {
                                         airtelProduct.add("subPackCpIds", subPacks);
                                     }
                                     if(action.equalsIgnoreCase("ACTIVE")) {
-                                        String bsbResponse = SubscriptionHelper.checkPackStatus(userId, token, headers);
-                                        JsonObject statusObject = JsonObject.readFrom(bsbResponse);
                                         if (statusObject.get(offerId) != null) {
                                             JsonObject offerObj = statusObject.get(offerId).asObject();
                                             long validity = offerObj.get("expireTimestamp").asLong();

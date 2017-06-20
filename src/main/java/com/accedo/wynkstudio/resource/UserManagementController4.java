@@ -42,5 +42,29 @@ public class UserManagementController4 extends UserManagementController3{
                 response.setHeader("Cache-Control", "no-cache");
                 return responseString;
         }
+        
+        /* 
+        Adding a new method to support iOS. need to be removed after resolving mapping issue.
+        */
+        @RequestMapping(value = "/account/userprofile", method = RequestMethod.GET, produces = "application/json;charset=UTF-8")
+	public @ResponseBody String getUserProfile(@RequestParam(value = "uid", required = false) String userId,
+			@RequestParam(value = "uId", required = false) String uId,
+			@RequestParam(value = "token", required = false) String token, HttpServletRequest request,
+			@RequestParam(value = "deviceId", required = false) String deviceId,
+                        @RequestParam(value = "os", required = false, defaultValue = "") String deviceOs,
+                        @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
+			HttpServletResponse response) {
+		userId = (userId == null || userId.isEmpty()) ? uId : userId;
+		String responseString = userDelegate.getUserByIdWithVersion(userId, request.getSession().getServletContext().getRealPath("/"), token, deviceId, deviceOs, appVersion);
+		
+		JsonObject responseJson = JsonObject.readFrom(responseString);
+		if(responseJson.get("statusCode") !=null && !responseJson.get("statusCode").isNull())
+		{
+			response.setStatus(HttpStatus.OK.value());
+		}
+		
+		response.setHeader("Cache-Control", "no-cache");
+		return responseString;
+	}	
 
 }

@@ -15,8 +15,13 @@ public class UserDelegateImpl implements UserDelegate {
 
 	@Override
 	public String getUserById(String userId, String contextPath, String token, String deviceId) {
-		return userService.getUserById(userId, contextPath, token, deviceId);
+            return userService.getUserById(userId, contextPath, token, deviceId, "", "");
 	}
+        
+        @Override
+        public String getUserByIdWithVersion(String userId, String contextPath, String token, String deviceId, String platform, String appVersion) {
+            return userService.getUserById(userId, contextPath, token, deviceId, platform, appVersion);
+        }
 
 	@Override
 	public String setUserById(String userId, String userInfoJson) {

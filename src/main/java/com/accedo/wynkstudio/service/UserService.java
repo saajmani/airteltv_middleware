@@ -4,7 +4,7 @@ import com.eclipsesource.json.JsonObject;
 
 public interface UserService {
 
-	public String getUserById(String userId, String contextPath, String token, String deviceId);
+	public String getUserById(String userId, String contextPath, String token, String deviceId,  String platform, String appVersion);
 
 	public String setUserById(String userId, String userInfoJson);
 

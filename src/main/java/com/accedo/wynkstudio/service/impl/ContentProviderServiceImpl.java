@@ -390,7 +390,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
                                 if (responseObject.asObject().get("id").asString().equalsIgnoreCase(AppgridHelper.appGridMetadata.
                                         get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
                                     if(userType.equalsIgnoreCase("POSTPAID") && userOperator.equalsIgnoreCase("AIRTEL")){
-                                    availableOffers.add(responseObject);
+                                        availableOffers.add(responseObject);
                                     }
                                 } else {
                                     availableOffers.add(responseObject);
