@@ -1,0 +1,39 @@
+[
+  {
+    "operation": "shift",
+    "spec": {
+      "totalResults": "totalCount",
+      "itemsPerPage": "pageSize",
+      "entries": {
+        "*": {
+          "id": "entries[#2].id",
+          "title": "entries[#2].title",
+          "thumbnails": {
+            "icon": {
+              "url": "entries[#4].images.portrait.url",
+              "width": "entries[#4].images.portrait.width",
+              "height": "entries[#4].images.portrait.height"
+            },
+            "poster": {
+              "url": "entries[#4].images.landscape.url",
+              "width": "entries[#4].images.landscape.width",
+              "height": "entries[#4].images.landscape.height"
+            }
+          },
+          "description": "entries[#2].description",
+          "credits": {
+            "0": {
+              "creditType": "entries[#2].creditType"
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "operation": "default",
+    "spec": {
+      "programType": "people"
+    }
+  }
+]

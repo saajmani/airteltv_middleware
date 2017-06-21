@@ -1,0 +1,108 @@
+[
+    {
+        "operation": "shift",
+        "spec": {
+            "totalResults": "totalCount",
+            "itemsPerPage": "pageSize",
+            "entries": {
+                "*": {
+                    "id": "entries[#2].guid",
+                    "guid": "entries[#2].id",
+                    "title": "entries[#2].title",
+                    "programType": "entries[#2].programType",
+                    "description": "entries[#2].description",
+                    "runtime": "entries[#2].runtime",
+                    "pubDate": "entries[#2].releaseDate",
+                    "year" : "entries[#2].releaseYear",
+                    "rating": "entries[#2].classifications[0].rating",
+                    "seriesId": "entries[#2].seriesId",
+                    "tvSeasonNumber": "entries[#2].tvSeasonNumber",
+                    "availableTvSeasonIds" : "entries[#2].seasons",
+                    "tvSeasonEpisodeNumber": "entries[#2].tvSeasonEpisodeNumber", 
+                    "media": {
+                        "0": {
+                            "content": {
+                                "0": {
+                                    "streamingUrl": "entries[#2].media[0].url",
+                                    "releases": {
+                                        "0": {
+                                            "url": "entries[#2].media[0].releaseUrl"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },                   
+                    "thumbnails": {
+                        "8": {
+                            "url": "entries[#4].images.portrait.url",
+                            "width": "entries[#4].images.portrait.width",
+                            "height": "entries[#4].images.portrait.height"
+                        },
+                        "9": {
+                            "url": "entries[#4].images.landscape.url",
+                            "width": "entries[#4].images.landscape.width",
+                            "height": "entries[#4].images.landscape.height"
+                        },
+                        "showImage": {
+                            "url": "entries[#4].images.landscape.url",
+                            "width": "entries[#4].images.landscape.width",
+                            "height": "entries[#4].images.landscape.height"
+                        },
+                        "380 X 180": {
+                            "url": "entries[#4].images.landscape.url",
+                            "width": "entries[#4].images.landscape.width",
+                            "height": "entries[#4].images.landscape.height"
+                        },
+                         "poster": {
+                            "url": "entries[#4].images.portrait.url",
+                            "width": "entries[#4].images.portrait.width",
+                            "height": "entries[#4].images.portrait.height"
+                        },
+                         "portrait": {
+                            "url": "entries[#4].images.portrait.url",
+                            "width": "entries[#4].images.portrait.width",
+                            "height": "entries[#4].images.portrait.height"
+                        },
+                         "landscape": {
+                            "url": "entries[#4].images.landscape.url",
+                            "width": "entries[#4].images.landscape.width",
+                            "height": "entries[#4].images.landscape.height"
+                        }
+                    },
+                    "language": "entries[#2].languages[0]",
+                    "credits": "entries[#2].credits"
+                }
+            }
+        }
+    },
+    {
+        "operation": "default",
+        "spec": {  
+            "entries[]": {
+                "*": {                   
+                    
+                    "categories": [
+                        {
+                            "id": "featured",
+                            "title": "featured",
+                            "description": ""
+                        }
+                    ],
+                    "tags[]": {
+                        "0": {
+                            "url": "",
+                            "scheme": "genre"
+                        }
+                    },
+                    "classifications[]": {
+                        "0": {
+                            "scheme": "",
+                            "consumerAdvice": ""
+                        }
+                    }
+                }
+            }
+        }
+    }
+]

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+	<servers>
+ 
+		<server>
+			<id>mytomcat</id>
+			<username>accedo_airtel</username>
+			<password>accedo@123</password>
+		</server>
+	</servers>
+</settings>

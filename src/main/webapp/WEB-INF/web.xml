@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+	<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:web="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+	  <display-name>wynkstudio Middleware Web Application</display-name>
+	<listener>
+		<listener-class>com.accedo.wynkstudio.listener.WynkStudioServletListener</listener-class>
+	</listener>
+	<filter>
+	    <filter-name>cors-filter</filter-name>
+	    <filter-class>com.accedo.wynkstudio.filter.CORSFilter</filter-class>
+	  </filter>
+	  <filter-mapping>
+		<filter-name>cors-filter</filter-name>
+		<url-pattern>*</url-pattern>
+	</filter-mapping>
+	  
+	<filter>
+		<filter-name>sCAuth-filter</filter-name>
+		<filter-class>com.accedo.wynkstudio.filter.SCAuthenticationFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>sCAuth-filter</filter-name>
+		<url-pattern>/v1/purchase</url-pattern>
+	</filter-mapping>
+
+	
+	 <filter>
+	  <filter-name>CompressingFilter</filter-name>
+		<filter-class>com.planetj.servlet.filter.compression.CompressingFilter</filter-class>
+	 </filter>
+	<filter-mapping>
+		<filter-name>CompressingFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	  <context-param>
+	    <param-name>contextConfigLocation</param-name>
+	    <param-value>classpath:application-config.xml</param-value>
+	  </context-param>
+	 <listener>
+	    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	  </listener>
+	  <!-- <listener>
+	    <listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
+	  </listener> -->
+	  <servlet>
+	    <servlet-name>wynkvideo</servlet-name>
+	    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+	    <init-param>
+	      <param-name>contextConfigLocation</param-name>
+	      <param-value>/WEB-INF/wynkvideo-servlet.xml</param-value>
+	    </init-param>
+	    <load-on-startup>1</load-on-startup>
+	  </servlet>
+	  <servlet-mapping>
+	    <servlet-name>wynkvideo</servlet-name>
+	    <url-pattern>/</url-pattern>
+	  </servlet-mapping>
+	</web-app>

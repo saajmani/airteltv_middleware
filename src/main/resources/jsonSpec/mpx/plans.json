@@ -1,0 +1,58 @@
+[
+  {
+    "operation": "shift",
+    "spec": {
+      "totalResults": "totalCount",
+      "itemsPerPage": "pageSize",
+      "entries": {
+        "*": {
+          "guid": "entries[#2].id",
+          "title": "entries[#2].title",
+          "productTags" : "entries[#2].productTags",
+          "description": "entries[#2].description",
+          "longDescription": "entries[#2].longDescription",
+          "bundleFlag" :"entries[#2].bundleFlag",
+          "bundleLimit" :"entries[#2].bundleLimit",
+          "productType" :"entries[#2].productType",
+          "productCycle" :"entries[#2].productCycle",
+          "freePack" :"entries[#2].freePack",
+          "isSubscription" :"entries[#2].isSubscription",
+          "itunesId" :"entries[#2].itunesId",
+          "itunesPrice" :"entries[#2].itunesPrice",
+          "images": {
+              "plan_logo": {
+               "0" : {
+               		"url" : "entries[#3].image"
+               		}
+              }
+          },
+          "pricingPlan": {
+            "pricingTiers": {
+              "0": {
+                "subscriptionUnits": "entries[#2].subscriptionUnit",
+                "amounts": {
+                  "INR": "entries[#3].pricing[0].amount"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+   {
+    "operation": "default",
+    "spec": {
+      "entries[]": {
+        "*": {
+          "contentProvider": "Erosnow",
+          "pricing[]": {
+            "0": {
+              "unit": "INR"
+            }
+          }
+        }
+      }
+    }
+  }
+]

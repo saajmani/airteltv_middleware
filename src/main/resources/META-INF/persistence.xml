@@ -1,0 +1,14 @@
+<persistence xmlns="http://java.sun.com/xml/ns/persistence"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd"
+	version="1.0">
+
+	<persistence-unit name="wynkdb" transaction-type="RESOURCE_LOCAL">
+		<class>com.accedo.wynkstudio.entity.UserProfile</class>
+		<class>com.accedo.wynkstudio.entity.BundleCounter</class>
+		<class>com.accedo.wynkstudio.entity.Favourite</class>
+		<class>com.accedo.wynkstudio.entity.Product</class>
+		<class>com.accedo.wynkstudio.entity.Recent</class>
+		<class>com.accedo.wynkstudio.entity.ReportAbuse</class>
+	</persistence-unit>
+</persistence>
