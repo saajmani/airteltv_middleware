@@ -4,8 +4,6 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +19,7 @@ import com.accedo.wynkstudio.util.Util;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
 import com.eclipsesource.json.JsonValue;
+import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 
 @SuppressWarnings("restriction")
 public class SubscriptionHelper {
@@ -157,6 +156,7 @@ public class SubscriptionHelper {
             if (productId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
 								.asString())) {
                 String offer_Ids = "";
+                String offerIdLive=null;
                 String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(uid, deviceId, deviceOs, appVersion);
                 JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
                 if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
@@ -171,13 +171,22 @@ public class SubscriptionHelper {
                                 if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
 								.asString())) {
                                     offer_Ids = "[" + String.valueOf(offerstatus.get(i).asObject().get("offerId").asInt()) + "]";
+                                offerIdLive = String.valueOf(offerstatus.get(i).asObject().get("offerId"));
                                     break;
                                 }
                             }
                         }
                     }
                 }
-                return SubscriptionHelper.getOfferProvision(uid, offer_Ids, deviceId, deviceOs, appVersion, header); 
+            String response = SubscriptionHelper.getOfferProvision(uid, offer_Ids, deviceId, deviceOs, appVersion, header);
+            JsonObject responseJson = JsonObject.readFrom(response);
+            if(responseJson.get(offerIdLive) == null || responseJson.get(offerIdLive).asObject().get("status") == null
+                    || !"PROVISIONED".equalsIgnoreCase(responseJson.get(offerIdLive).asObject().get("status").asString())) {
+                log.info("Error_LIVETV_SUBS "+response);
+                throw new BusinessApplicationException(HttpStatus.FAILED_DEPENDENCY.value(),
+                        "Error From BSB Provision Call " + responseJson);
+            }
+            return response;
                 
             }
 		String response = "";
