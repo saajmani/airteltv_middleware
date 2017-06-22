@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -349,8 +350,26 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 			JsonObject responseJson = JsonObject.readFrom(response);
 			JsonArray responseArray = responseJson.get("entries").asArray();
                         JsonArray availableOffers = new JsonArray();
+            String svpId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
+                    .asString();
 			JsonArray longDescriptionJsonArray = null;
+            boolean isUserEligForSvpProd = false;
+
+            if(StringUtils.isNotEmpty(uid)) {
+                // Add airtel infinity pack only for Airtel postpaid user
+                String bsbProfile = SubscriptionHelper.getUserProfile(uid, headers);
+
+                // Get circle and userType
+                JsonObject profileObject = JsonObject.readFrom(bsbProfile);
+                String userOperator = (profileObject.get("operator") != null
+                        && !profileObject.get("operator").isNull())? profileObject.get("operator").asString() : "";
+                String userType = (profileObject.get("userType") != null
+                        && !profileObject.get("userType").isNull())? profileObject.get("userType").asString() : "";
+                if(userType.equalsIgnoreCase("POSTPAID") && userOperator.equalsIgnoreCase("AIRTEL"))
+                    isUserEligForSvpProd = true;
+            }
 			for (JsonValue responseObject : responseArray) {
+                String productId = responseObject.asObject().get("id").asString();
 				for (JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
 					if (cpObject.isObject() && cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
 						responseObject.asObject().set("contentProvider",
@@ -378,23 +397,33 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 				}
 			
 				responseObject.asObject().set("longDescription", longDescriptionJsonArray);
-                                // Add airtel infinity pack only for Airtel postpaid user
-                                String bsbProfile = SubscriptionHelper.getUserProfile(uid, headers);
+                if(svpId.equalsIgnoreCase(productId)) {
+                    if(isUserEligForSvpProd) // Add airtel infinity pack only for Airtel postpaid
+                                             // user
+                        availableOffers.add(responseObject);
+                }
+                else {
+                    availableOffers.add(responseObject);
+                }
 
-                                // Get circle and userType
-                                JsonObject profileObject = JsonObject.readFrom(bsbProfile);
-                                String userOperator = (profileObject.get("operator") != null && !profileObject.get("operator").isNull()) ? profileObject
-                                                .get("operator").asString() : "";
-                                String userType = (profileObject.get("userType") != null && !profileObject.get("userType").isNull()) ? profileObject
-                                                .get("userType").asString() : "";
-                                if (responseObject.asObject().get("id").asString().equalsIgnoreCase(AppgridHelper.appGridMetadata.
-                                        get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
-                                    if(userType.equalsIgnoreCase("POSTPAID") && userOperator.equalsIgnoreCase("AIRTEL")){
-                                        availableOffers.add(responseObject);
-                                    }
-                                } else {
-                                    availableOffers.add(responseObject);
-                                }
+                // String bsbProfile = SubscriptionHelper.getUserProfile(uid, headers);
+                //
+                // // Get circle and userType
+                // JsonObject profileObject = JsonObject.readFrom(bsbProfile);
+                // String userOperator = (profileObject.get("operator") != null &&
+                // !profileObject.get("operator").isNull()) ? profileObject
+                // .get("operator").asString() : "";
+                // String userType = (profileObject.get("userType") != null &&
+                // !profileObject.get("userType").isNull()) ? profileObject
+                // .get("userType").asString() : "";
+                // if(responseObject.asObject().get("id").asString().equalsIgnoreCase(svpId)) {
+                // if(userType.equalsIgnoreCase("POSTPAID") &&
+                // userOperator.equalsIgnoreCase("AIRTEL")){
+                // availableOffers.add(responseObject);
+                // }
+                // } else {
+                // availableOffers.add(responseObject);
+                // }
 			}
                         
                         
@@ -956,8 +985,7 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 					: AppgridHelper.getZipOfAppgridAssets("xxhdpi");
 		}
 	}
-	
-	
+
 	@Override
     public byte[] getAssetsForNewVersion(String dpi) {
 		switch (dpi) {
