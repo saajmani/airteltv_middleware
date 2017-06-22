@@ -331,70 +331,62 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 	@Override
     public String getSubscriptionPlans(String cpId, String platform, String appVersion, String deviceId, String uid,
             String token) {
-		String response = "";
-		try {
-			cpId = (cpId != null) ? cpId : "";
-			String feedsString = (platform != null && !platform.isEmpty()
-					&& platform.equalsIgnoreCase(messageSource
-							.getMessage(CPConstants.WYNKSTUDIO_SUBSCRIPTION_PLATFORM_IOS, null, "", Locale.ENGLISH))
-									? AppgridHelper.appGridMetadata
-                                                                                .get("subscription_feed_ios").asString()
-									: AppgridHelper.appGridMetadata.get("subscription_feed").asString())
-					+ "?byProductTags=" + cpId;
-			response = Util.executeApiGetCall(feedsString);
-			response = response.replace("pl2$bundleFlag", "bundleFlag").replace("pl2$bundleLimit", "bundleLimit")
-					.replace("pl2$isSubscription", "isSubscription").replace("pl1$itunesId", "itunesId")
-					.replace("pl1$itunesPrice", "itunesPrice").replace("pl1$freePack", "freePack")
-					.replace("com.airtel.wynkpremiere.hooq_25", "com.airtel.wynkpremiere.hooq_250")
-                    .replace("com.airtel.wynkpremiere.erosnow_6", "com.airtel.wynkpremiere.erosnow_60")
-					.replace("com.airtel.wynkpremiere.hooq_2500", "com.airtel.wynkpremiere.hooq_250")
-					.replace("com.airtel.wynkpremiere.erosnow_600", "com.airtel.wynkpremiere.erosnow_60");
-			response = JsonTransformation.transformJson(response, "/jsonSpec/mpx/plans.json");
-			JsonObject responseJson = JsonObject.readFrom(response);
-			JsonArray responseArray = responseJson.get("entries").asArray();
-                        JsonArray availableOffers = new JsonArray();
+        String response = "";
+        try {
+            boolean isUserEligForSvpProd = false;
+            boolean isEligibleForpaidSVP = false;
+            Set<String> userEligiblePacksWCF = null;
             String svpId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
                     .asString();
             String svpPaidId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_paid_single_prod_id")
                     .asString();
-			JsonArray longDescriptionJsonArray = null;
-            boolean isUserEligForSvpProd = false;
-            boolean isEligibleForpaidSVP = false;
-            Set<String> userEligiblePacksWCF = null;
             if(StringUtils.isNotEmpty(uid) && StringUtils.isNotEmpty(appVersion)) {
                 userEligiblePacksWCF = getEligiblePacksFromWCF(uid, deviceId, platform, appVersion);
                 isEligibleForpaidSVP = userEligiblePacksWCF.contains(svpPaidId);
                 isUserEligForSvpProd = userEligiblePacksWCF.contains(svpId);
             }
-			for (JsonValue responseObject : responseArray) {
+
+            cpId = (cpId != null)? cpId : "";
+            JsonObject responseJson = new JsonObject();
+            JsonArray responseArray = getCpProducts(cpId, platform);
+            if(StringUtils.isNotEmpty(cpId) && (isEligibleForpaidSVP || isUserEligForSvpProd )){
+                JsonArray responseArray2 = getCpProducts("AIRTEL", platform);
+                for(JsonValue responseObject : responseArray)
+                    responseArray2.add(responseObject);
+                responseArray=responseArray2;
+            }
+                        JsonArray availableOffers = new JsonArray();
+            JsonArray longDescriptionJsonArray = null;
+            for(JsonValue responseObject : responseArray) {
                 String productId = responseObject.asObject().get("id").asString();
-				for (JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
-					if (cpObject.isObject() && cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
-						responseObject.asObject().set("contentProvider",
-								cpObject.asObject().get("title").asString().toUpperCase());
-				}
-				
-				String[] longDescription = responseObject.asObject().get("longDescription").asString().split("~");
-				longDescriptionJsonArray = new JsonArray();
-				if (longDescription.length > 0) {
-					for (int i = 0; i < longDescription.length; i++) {
-						if(!longDescription[i].isEmpty() ){
-						longDescriptionJsonArray.add(longDescription[i]);
-						}
-					}
-				}
-				
-				String starIconProducts = AppgridHelper.appGridMetadata.get("star_icon_products").asString();
-				if(starIconProducts.contains(responseObject.asObject().get("id").asString()))
-				{
-					responseObject.asObject().set("starIcon",true);
-				}
-				else
-				{
-					responseObject.asObject().set("starIcon",false);
-				}
-			
-				responseObject.asObject().set("longDescription", longDescriptionJsonArray);
+                for(JsonValue cpObject : responseObject.asObject().get("productTags").asArray()) {
+                    if(cpObject.isObject() && cpObject.asObject().get("scheme").asString().equalsIgnoreCase("provider"))
+                        responseObject.asObject().set("contentProvider",
+                                cpObject.asObject().get("title").asString().toUpperCase());
+                }
+
+                String mpxProdCpId = responseObject.asObject().get("contentProvider").asString();
+                if(StringUtils.isNotBlank(cpId) && !(mpxProdCpId.equalsIgnoreCase(cpId) || "AIRTEL".equals(mpxProdCpId)))
+                    continue;
+                String[] longDescription = responseObject.asObject().get("longDescription").asString().split("~");
+                longDescriptionJsonArray = new JsonArray();
+                if(longDescription.length > 0) {
+                    for(int i = 0; i < longDescription.length; i++) {
+                        if(!longDescription[i].isEmpty()) {
+                            longDescriptionJsonArray.add(longDescription[i]);
+                        }
+                    }
+                }
+
+                String starIconProducts = AppgridHelper.appGridMetadata.get("star_icon_products").asString();
+                if(starIconProducts.contains(responseObject.asObject().get("id").asString())) {
+                    responseObject.asObject().set("starIcon", true);
+                }
+                else {
+                    responseObject.asObject().set("starIcon", false);
+                }
+
+                responseObject.asObject().set("longDescription", longDescriptionJsonArray);
                 if(svpId.equalsIgnoreCase(productId) || svpPaidId.equalsIgnoreCase(productId)) {
                     if((isUserEligForSvpProd && svpId.equalsIgnoreCase(productId))
                             || (isEligibleForpaidSVP && svpPaidId.equalsIgnoreCase(productId))) // Add
@@ -427,25 +419,49 @@ public class ContentProviderServiceImpl implements ContentProviderService {
                 // } else {
                 // availableOffers.add(responseObject);
                 // }
-			}
+            }
                         
                         
-			responseJson.set("entries", availableOffers);
+            responseJson.set("entries", availableOffers);
 
-			if (!uid.isEmpty() && !token.isEmpty()) {
-				response = getUserSpecificPlans(responseJson, uid, token, platform);
-			} else {
-				response = responseJson.toString();
-			}
-		} catch (HttpClientErrorException e) {
-			log.error("Error, line 291 -", e);
-			throw new BusinessApplicationException(e.getStatusCode().value(), e.getStatusText());
-		} catch (Exception e) {
-			log.error("Error, line 294 -", e);
-			throw new BusinessApplicationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Some error occured!");
-		}
-		return response;
-	}
+            if(!uid.isEmpty() && !token.isEmpty()) {
+                response = getUserSpecificPlans(responseJson, uid, token, platform);
+            }
+            else {
+                response = responseJson.toString();
+            }
+        }
+        catch (HttpClientErrorException e) {
+            log.error("Error, line 291 -", e);
+            throw new BusinessApplicationException(e.getStatusCode().value(), e.getStatusText());
+        }
+        catch (Exception e) {
+            log.error("Error, line 294 -", e);
+            throw new BusinessApplicationException(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Some error occured!");
+        }
+        return response;
+    }
+
+    private JsonArray getCpProducts(String cpId, String platform) {
+        String response;
+        String feedsString = (platform != null && !platform.isEmpty()
+                && platform.equalsIgnoreCase(messageSource.getMessage(CPConstants.WYNKSTUDIO_SUBSCRIPTION_PLATFORM_IOS, null, "",
+                        Locale.ENGLISH))? AppgridHelper.appGridMetadata.get("subscription_feed_ios")
+                                .asString() : AppgridHelper.appGridMetadata.get("subscription_feed").asString())
+                + "?byProductTags=" + cpId;
+        response = Util.executeApiGetCall(feedsString);
+        response = response.replace("pl2$bundleFlag", "bundleFlag").replace("pl2$bundleLimit", "bundleLimit")
+                .replace("pl2$isSubscription", "isSubscription").replace("pl1$itunesId", "itunesId")
+                .replace("pl1$itunesPrice", "itunesPrice").replace("pl1$freePack", "freePack")
+                .replace("com.airtel.wynkpremiere.hooq_25", "com.airtel.wynkpremiere.hooq_250")
+                .replace("com.airtel.wynkpremiere.erosnow_6", "com.airtel.wynkpremiere.erosnow_60")
+                .replace("com.airtel.wynkpremiere.hooq_2500", "com.airtel.wynkpremiere.hooq_250")
+                .replace("com.airtel.wynkpremiere.erosnow_600", "com.airtel.wynkpremiere.erosnow_60");
+        response = JsonTransformation.transformJson(response, "/jsonSpec/mpx/plans.json");
+        JsonObject responseJson = JsonObject.readFrom(response);
+        JsonArray responseArray = responseJson.get("entries").asArray();
+        return responseArray;
+    }
 
     public Set<String> getEligiblePacksFromWCF(String userId, String deviceId, String deviceOs, String appVersion) {
         Set <String> eligiblepackIds = new HashSet<>(); 

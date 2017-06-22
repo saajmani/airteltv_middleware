@@ -119,7 +119,7 @@ public class UserServiceImpl implements UserService {
 		return updateMetadata();
 	}
 
-	@Override
+    @Override
     public String refreshMetadata() {
 		String results = "";
 		JsonArray assetsJsonArray = JsonArray.readFrom(AppgridHelper.appGridMetadata.get("server_refresh_api")
@@ -190,13 +190,13 @@ public class UserServiceImpl implements UserService {
                                                     String action = offerpacks.get(j).asObject().get("action").asString();
 
                                                     if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString())) {
-                                                        airtelProduct = airtelProduct = SubscriptionHelper.allProductsMap.get(airtelOfferId);
+                                        airtelProduct = SubscriptionHelper.allProductsMap.get(airtelOfferId);
                                                         for (int k = 0; k < offerpacks.size(); k++) {
                                                             if(offerpacks.get(k).asObject().get("cpName") != null)
                                                                 subPacks.add(offerpacks.get(k).asObject().get("cpName"));
                                                         }
                                                         if (subPacks.size() > 0) {
-                                                            airtelProduct.add("subPackCpIds", subPacks);
+                                            airtelProduct.set("subPackCpIds", subPacks);
                                                         }
                                                         if(action.equalsIgnoreCase("ACTIVE")) {
                                                             if (statusObject.get(offerId) != null) {
@@ -214,7 +214,13 @@ public class UserServiceImpl implements UserService {
                                                                 airtelProduct.set("noOfDaysLeft", TimeUnit.MILLISECONDS.toDays(validity) - 
                                                                         TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
                                                             }
-                                                        } else {
+                                        }
+                                        else if(action.equalsIgnoreCase("PRE_AUTH")) {
+                                            airtelProduct.set("active", "false");
+                                            airtelProduct.set("state", action);
+                                            airtelProduct.set("live", true);
+                                        }
+                                        else {
                                                             airtelProduct.set("active", "false");
                                                         }
                                                     }
@@ -332,7 +338,7 @@ public class UserServiceImpl implements UserService {
 		return userProfile;
 	}
 
-	@Override
+    @Override
     public String updateUserFavouriteList(String userId, String userInfoJson) {
 		String result = null;
 		AppgridVO appgridVO = null;
@@ -367,7 +373,7 @@ public class UserServiceImpl implements UserService {
 		return result;
 	}
 
-	@Override
+    @Override
     public String updateUserRecentList(String userId, String userInfoJson) {
 		String result = null;
 		AppgridVO appgridVO = null;
@@ -444,7 +450,7 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 
-	@Override
+    @Override
     public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
 		JsonArray productsList = new JsonArray();
 		Boolean trialFlag = false;
@@ -625,8 +631,9 @@ public class UserServiceImpl implements UserService {
                 return productsList.toString();
 	}
 
-	@Override
-    public String getRails(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer) {
+    @Override
+    public String getRails(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId,
+            boolean showOffer) {
 		log.info("Rails call for uid:" + userId);
 		String result = null;
 		try {
@@ -1803,8 +1810,7 @@ public class UserServiceImpl implements UserService {
                             JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
                             for (int i = 0; i < offerstatus.size(); i++) {//"offerId":9013
                     if((offerstatus.get(i).asObject().get("offerId").asInt() == 9013
-                            || offerstatus.get(i).asObject().get("offerId").asInt() == 9011)
-                            &&
+                            || offerstatus.get(i).asObject().get("offerId").asInt() == 9011) &&
                                         offerstatus.get(i).asObject().get("packs").asArray() != null &&
                                         offerstatus.get(i).asObject().get("packs").asArray().size() > 0) {
                                     JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
