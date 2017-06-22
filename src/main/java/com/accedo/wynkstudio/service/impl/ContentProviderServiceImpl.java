@@ -3,8 +3,10 @@ package com.accedo.wynkstudio.service.impl;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
@@ -327,7 +329,8 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 
 	/* Get subscription plans */
 	@Override
-	public String getSubscriptionPlans(String cpId, String platform, String uid, String token) {
+    public String getSubscriptionPlans(String cpId, String platform, String appVersion, String deviceId, String uid,
+            String token) {
 		String response = "";
 		try {
 			cpId = (cpId != null) ? cpId : "";
@@ -352,21 +355,16 @@ public class ContentProviderServiceImpl implements ContentProviderService {
                         JsonArray availableOffers = new JsonArray();
             String svpId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
                     .asString();
+            String svpPaidId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_paid_single_prod_id")
+                    .asString();
 			JsonArray longDescriptionJsonArray = null;
             boolean isUserEligForSvpProd = false;
-
-            if(StringUtils.isNotEmpty(uid)) {
-                // Add airtel infinity pack only for Airtel postpaid user
-                String bsbProfile = SubscriptionHelper.getUserProfile(uid, headers);
-
-                // Get circle and userType
-                JsonObject profileObject = JsonObject.readFrom(bsbProfile);
-                String userOperator = (profileObject.get("operator") != null
-                        && !profileObject.get("operator").isNull())? profileObject.get("operator").asString() : "";
-                String userType = (profileObject.get("userType") != null
-                        && !profileObject.get("userType").isNull())? profileObject.get("userType").asString() : "";
-                if(userType.equalsIgnoreCase("POSTPAID") && userOperator.equalsIgnoreCase("AIRTEL"))
-                    isUserEligForSvpProd = true;
+            boolean isEligibleForpaidSVP = false;
+            Set<String> userEligiblePacksWCF = null;
+            if(StringUtils.isNotEmpty(uid) && StringUtils.isNotEmpty(appVersion)) {
+                userEligiblePacksWCF = getEligiblePacksFromWCF(uid, deviceId, platform, appVersion);
+                isEligibleForpaidSVP = userEligiblePacksWCF.contains(svpPaidId);
+                isUserEligForSvpProd = userEligiblePacksWCF.contains(svpId);
             }
 			for (JsonValue responseObject : responseArray) {
                 String productId = responseObject.asObject().get("id").asString();
@@ -397,8 +395,13 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 				}
 			
 				responseObject.asObject().set("longDescription", longDescriptionJsonArray);
-                if(svpId.equalsIgnoreCase(productId)) {
-                    if(isUserEligForSvpProd) // Add airtel infinity pack only for Airtel postpaid
+                if(svpId.equalsIgnoreCase(productId) || svpPaidId.equalsIgnoreCase(productId)) {
+                    if((isUserEligForSvpProd && svpId.equalsIgnoreCase(productId))
+                            || (isEligibleForpaidSVP && svpPaidId.equalsIgnoreCase(productId))) // Add
+                                                                                                // airtel
+                                                                                                // infinity
+                                                                                                // pack
+                                                                     // only for Airtel postpaid
                                              // user
                         availableOffers.add(responseObject);
                 }
@@ -444,6 +447,24 @@ public class ContentProviderServiceImpl implements ContentProviderService {
 		return response;
 	}
 
+    public Set<String> getEligiblePacksFromWCF(String userId, String deviceId, String deviceOs, String appVersion) {
+        Set <String> eligiblepackIds = new HashSet<>(); 
+        String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
+        JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
+        if(offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
+            JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
+            for(int i = 0; i < offerstatus.size(); i++) {// "offerId":9013
+                if(true) {
+                    JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
+                    for(int j = 0; j < offerpacks.size(); j++) {
+                        String offerId = offerpacks.get(j).asObject().get("partnerProductId").asString();
+                        eligiblepackIds.add(offerId);
+                    }
+                }
+            }
+        }
+        return eligiblepackIds;
+    }
 	private String getUserSpecificPlans(JsonObject responseJson, String uid, String token, String platform) {
 		JsonArray entriesArray = responseJson.get("entries").asArray();
 		List<ProductVO> productsList = productDao.getProductsByUserId(uid);

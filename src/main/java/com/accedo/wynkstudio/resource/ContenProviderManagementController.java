@@ -208,8 +208,10 @@ public class ContenProviderManagementController {
 			@RequestParam(value = "platform", required = false, defaultValue = "") String platform,
 			@RequestParam(value = "uid", required = false, defaultValue = "") String uid,
 			@RequestParam(value = "token", required = false, defaultValue = "") String token,
+            @RequestParam(value = "appVersion", required = false, defaultValue = "") String appVersion,
+            @RequestParam(value = "deviceId", required = false, defaultValue = "sdfhsfh") String deviceId,
 			HttpServletResponse response) {
-		String responseString = contentProviderDelegate.getSubscriptionPlans(cpId, platform, uid, token);
+        String responseString = contentProviderDelegate.getSubscriptionPlans(cpId, platform, appVersion, deviceId, uid, token);
 		response.setHeader("Cache-Control", "no-cache");
 		return responseString;
 	}

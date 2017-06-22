@@ -35,7 +35,8 @@ public interface ContentProviderDelegate {
 	
 	public String updateAssets();
 
-	public String getSubscriptionPlans(String cpId, String platform, String uid, String token);
+    public String getSubscriptionPlans(String cpId, String platform, String appVersion, String deviceId, String uid,
+            String token);
 	
 	public String refreshAssets();
 

@@ -27,7 +27,8 @@ public interface ContentProviderService {
 	
 	public String refreshAssets();
 
-	public String getSubscriptionPlans(String cpId, String platform, String uid, String token);
+    public String getSubscriptionPlans(String cpId, String platform, String appVersion, String deviceId, String uid,
+            String token);
 
 	public String getAllAssets();
 }

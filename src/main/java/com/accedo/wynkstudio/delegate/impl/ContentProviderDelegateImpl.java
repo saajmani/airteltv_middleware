@@ -88,7 +88,8 @@ public class ContentProviderDelegateImpl implements ContentProviderDelegate {
 	}
 	
 	
-	public byte[] getNewAssets(String dpi)
+	@Override
+    public byte[] getNewAssets(String dpi)
 	{
 		ContentProviderService cpObject = (ContentProviderService) cpRegisterService.getContentProvider(messageSource
 				.getMessage(CPConstants.WYNKSTUDIO_CP_TOKEN_CONTENTPROVIDER, null, "", Locale.ENGLISH));
@@ -102,19 +103,22 @@ public class ContentProviderDelegateImpl implements ContentProviderDelegate {
 		return cpObject.updateAssets();
 	}
 	
-	public String refreshAssets() {
+	@Override
+    public String refreshAssets() {
 		ContentProviderService cpObject = (ContentProviderService) cpRegisterService.getContentProvider(messageSource
 				.getMessage(CPConstants.WYNKSTUDIO_CP_TOKEN_CONTENTPROVIDER, null, "", Locale.ENGLISH));
 		return cpObject.refreshAssets();
 	}
 
 	@Override
-	public String getSubscriptionPlans(String cpId, String platform, String uid, String token) {
+    public String getSubscriptionPlans(String cpId, String platform, String appVersion, String deviceId, String uid,
+            String token) {
 		ContentProviderService cpObject = (ContentProviderService) cpRegisterService.getContentProvider(messageSource.getMessage(CPConstants.WYNKSTUDIO_CP_TOKEN_CONTENTPROVIDER, null, "", Locale.ENGLISH));
-		return cpObject.getSubscriptionPlans(cpId, platform, uid, token);
+        return cpObject.getSubscriptionPlans(cpId, platform, appVersion, deviceId, uid, token);
 	}
 
-	public String getAllAssets() {
+	@Override
+    public String getAllAssets() {
 		ContentProviderService cpObject = (ContentProviderService) cpRegisterService.getContentProvider(messageSource
 				.getMessage(CPConstants.WYNKSTUDIO_CP_TOKEN_CONTENTPROVIDER, null, "", Locale.ENGLISH));
 		return cpObject.getAllAssets();
