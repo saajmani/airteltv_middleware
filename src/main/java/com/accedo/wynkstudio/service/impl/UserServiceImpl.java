@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
@@ -41,8 +42,6 @@ import com.accedo.wynkstudio.helper.AppgridHelper;
 import com.accedo.wynkstudio.helper.ContentProviderHelper;
 import com.accedo.wynkstudio.helper.ProducttHelper;
 import com.accedo.wynkstudio.helper.SubscriptionHelper;
-import com.accedo.wynkstudio.mongodb.dao.MongoDBUserDAO;
-import com.accedo.wynkstudio.mongodb.dao.MongoDBUserDerivedProfileDAO;
 import com.accedo.wynkstudio.mongodb.entity.User;
 import com.accedo.wynkstudio.mongodb.entity.UserDerivedProfile;
 import com.accedo.wynkstudio.service.UserService;
@@ -65,7 +64,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -121,7 +119,8 @@ public class UserServiceImpl implements UserService {
 		return updateMetadata();
 	}
 
-	public String refreshMetadata() {
+	@Override
+    public String refreshMetadata() {
 		String results = "";
 		JsonArray assetsJsonArray = JsonArray.readFrom(AppgridHelper.appGridMetadata.get("server_refresh_api")
 				.asObject().get("refresh_metadata").asString());
@@ -330,7 +329,8 @@ public class UserServiceImpl implements UserService {
 		return userProfile;
 	}
 
-	public String updateUserFavouriteList(String userId, String userInfoJson) {
+	@Override
+    public String updateUserFavouriteList(String userId, String userInfoJson) {
 		String result = null;
 		AppgridVO appgridVO = null;
 		ObjectMapper mapper = new ObjectMapper();
@@ -364,7 +364,8 @@ public class UserServiceImpl implements UserService {
 		return result;
 	}
 
-	public String updateUserRecentList(String userId, String userInfoJson) {
+	@Override
+    public String updateUserRecentList(String userId, String userInfoJson) {
 		String result = null;
 		AppgridVO appgridVO = null;
 		ObjectMapper mapper = new ObjectMapper();
@@ -440,7 +441,8 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 
-	public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
+	@Override
+    public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
 		JsonArray productsList = new JsonArray();
 		Boolean trialFlag = false;
                 String bsbResponse = SubscriptionHelper.checkPackStatus(userId, token, headers);
@@ -620,7 +622,8 @@ public class UserServiceImpl implements UserService {
                 return productsList.toString();
 	}
 
-	public String getRails(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer) {
+	@Override
+    public String getRails(String userId, String bsbToken, Boolean airtel, String bsbResponse, String deviceId, boolean showOffer) {
 		log.info("Rails call for uid:" + userId);
 		String result = null;
 		try {
@@ -1333,7 +1336,7 @@ public class UserServiceImpl implements UserService {
 								String productType = SubscriptionHelper.allProductsMap.get(productId).asObject()
 										.get("productType").asString();
 
-								if (!bundleFlag) {
+                                if(!bundleFlag || isSingleVideoProduct(productId)) {
 									contentValidity = bsbValidity;
 								}
 
@@ -1429,7 +1432,18 @@ public class UserServiceImpl implements UserService {
 		return response;
 	}
 
-	private String getMpxFeedAssetIds(List<RecentVO> recentVOs) {
+    private boolean isSingleVideoProduct(String productId) {
+        if(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("singleVideoPacksList") != null) {
+            String[] ids = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("singleVideoPacksList")
+                    .asString().split(",");
+            for(String id : ids)
+                if(id.equalsIgnoreCase(productId))
+                    return true;
+        }
+        return false;
+    }
+
+    private String getMpxFeedAssetIds(List<RecentVO> recentVOs) {
 		StringBuffer assetIds = new StringBuffer();
 		for (RecentVO recentVO : recentVOs) {
 			String assetId = recentVO.getAssetId();

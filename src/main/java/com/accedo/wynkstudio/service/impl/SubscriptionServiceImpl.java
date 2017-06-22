@@ -411,7 +411,8 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 			ProductVO productFromDb = null;
 			HashMap<String, String> expiryMap = new HashMap<String, String>();
 			HashMap<String, Boolean> buttonMap = new HashMap<String, Boolean>();
-
+			String svpId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString();
+            DateFormat outputFormatter = new SimpleDateFormat("dd/MM/yyyy");
 			if (AppgridHelper.appGridMetadata.get("bsb_flag").toString().equalsIgnoreCase("\"true\"")) {
 				String bsbToken = JsonObject.readFrom(token).get("token").asString();
 				String bsbResponse = SubscriptionHelper.checkPackStatus(uid, bsbToken, headers);
@@ -426,8 +427,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 						subscriptionStatus = SubscriptionHelper.evaluateSubscriptionStatus(bsbProductObject, productId);
 						if (subscriptionStatus.get("status").asBoolean()) {
 							productFromDb = productDao.getProductByUserWithProductId(productId, uid);
-                                                        if (productId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
-								.asString()) && productFromDb != null) {
+                            if(productId.equalsIgnoreCase(svpId) && productFromDb != null) {
                                                             productFromDb.setActive(true);
                                                         }
 							if (productFromDb != null && productFromDb.getActive()) {
@@ -440,13 +440,11 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 								if (validityLeft > 0 && validityLeft <= 172800) {
 									output = String.valueOf((validityLeft / 3600)) + " hours";
 								} else {
-									DateFormat outputFormatter = new SimpleDateFormat("dd/MM/yyyy");
 									output = outputFormatter.format(expiryDate);
 								}
 								if(productFromDb.getContentValidity() < productFromDb.getBsbValidity())
 								{
 									Date expiryDateCp = new Date(productFromDb.getContentValidity());
-									DateFormat outputFormatter = new SimpleDateFormat("dd/MM/yyyy");
 									expiryMap.put(productId, outputFormatter.format(expiryDateCp).toString());
 								}
 								else
@@ -456,6 +454,11 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 								buttonMap.put(productId, subscriptionStatus.get("body").asObject().get("unsubscribe")
 										.asBoolean());
 							}
+                        }
+                        else if(productId.equals(svpId)) { // svp should be shown and greyed
+                            appendIds = appendIds + productId + "|";
+                            expiryMap.put(productId, outputFormatter.format(bsbProductObject.get("expireTimestamp").asLong()));
+                            buttonMap.put(productId, false);
 						}
 					}
 				}
@@ -492,7 +495,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 					responseArray.get(i).asObject().set("expiry", expiryMap.get(pId));
 					responseArray.get(i).asObject()
 							.set("enabled", buttonMap.get(pId) != null ? buttonMap.get(pId) : true);
-					if (SubscriptionHelper.bundleCheck(pId)) {
+                    if(!pId.equalsIgnoreCase(svpId) && SubscriptionHelper.bundleCheck(pId)) {
 						limit = getBundleStatus(pId, uid);
 					}  
                                         
