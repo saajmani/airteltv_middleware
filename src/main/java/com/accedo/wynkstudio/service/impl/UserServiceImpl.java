@@ -1799,7 +1799,9 @@ public class UserServiceImpl implements UserService {
                         if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
                             JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
                             for (int i = 0; i < offerstatus.size(); i++) {//"offerId":9013
-                                if (offerstatus.get(i).asObject().get("offerId").asInt() == 9013 &&
+                    if((offerstatus.get(i).asObject().get("offerId").asInt() == 9013
+                            || offerstatus.get(i).asObject().get("offerId").asInt() == 9011)
+                            &&
                                         offerstatus.get(i).asObject().get("packs").asArray() != null &&
                                         offerstatus.get(i).asObject().get("packs").asArray().size() > 0) {
                                     JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
