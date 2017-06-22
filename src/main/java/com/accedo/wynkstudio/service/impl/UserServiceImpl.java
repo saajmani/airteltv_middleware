@@ -163,7 +163,9 @@ public class UserServiceImpl implements UserService {
                                 JsonObject statusObject = JsonObject.readFrom(bsbResponse);
                                 String airtelOfferId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString();
                                 if (statusObject.get(airtelOfferId) != null
-                                        && statusObject.get(airtelOfferId).asObject().get("status").asString().equalsIgnoreCase("DEACTIVATED")) {
+                        && statusObject.get(airtelOfferId).asObject().get("status").asString().equalsIgnoreCase("DEACTIVATED")
+                        && statusObject.get(airtelOfferId).asObject().get("expireTimestamp").asLong() > System
+                                .currentTimeMillis()) {
                                     airtelProduct = SubscriptionHelper.allProductsMap.get(airtelOfferId);
                                     JsonObject offerObj = statusObject.get(airtelOfferId).asObject();
                                     long validity = offerObj.get("expireTimestamp").asLong();
