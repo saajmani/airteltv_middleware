@@ -171,6 +171,7 @@ public class UserServiceImpl implements UserService {
                                     airtelProduct.set("state", offerObj.get("status").asString());
                                     airtelProduct.set("live", "true");
                                     airtelProduct.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+                    airtelProduct.set("cpId", airtelProduct.getString("contentProvider", "AIRTEL"));
                                 } else if (!platform.isEmpty() && !appVersion.isEmpty()) {
                                     String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, platform, appVersion);
                                     JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
