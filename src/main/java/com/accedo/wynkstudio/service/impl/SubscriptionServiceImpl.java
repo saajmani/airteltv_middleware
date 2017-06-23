@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
@@ -413,6 +414,8 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 			HashMap<String, Boolean> buttonMap = new HashMap<String, Boolean>();
 			String svpId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id").asString();
             DateFormat outputFormatter = new SimpleDateFormat("dd/MM/yyyy");
+            outputFormatter.setTimeZone(TimeZone.getTimeZone("IST"));
+
 			if (AppgridHelper.appGridMetadata.get("bsb_flag").toString().equalsIgnoreCase("\"true\"")) {
 				String bsbToken = JsonObject.readFrom(token).get("token").asString();
 				String bsbResponse = SubscriptionHelper.checkPackStatus(uid, bsbToken, headers);
