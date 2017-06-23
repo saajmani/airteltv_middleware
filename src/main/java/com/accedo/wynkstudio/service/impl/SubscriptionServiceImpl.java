@@ -504,7 +504,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 					responseArray.get(i).asObject().set("expiry", expiryMap.get(pId));
 					responseArray.get(i).asObject()
 							.set("enabled", buttonMap.get(pId) != null ? buttonMap.get(pId) : true);
-                    if(!pId.equalsIgnoreCase(svpId) && SubscriptionHelper.bundleCheck(pId)) {
+                    if(!SubscriptionHelper.isSingleVideoProduct(pId) && SubscriptionHelper.bundleCheck(pId)) {
 						limit = getBundleStatus(pId, uid);
 					}  
                                         
