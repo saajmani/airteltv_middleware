@@ -458,7 +458,13 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 										.asBoolean());
 							}
                         }
-                        else if(productId.equals(svpId)) { // svp should be shown and greyed
+                        else if(productId.equals(svpId)
+                                && bsbProductObject.get("expireTimestamp").asLong() > System.currentTimeMillis()) { // svp
+                                                                                                                    // should
+                                                                                                                    // be
+                                                                                                                    // shown
+                                                                                                                    // and
+                                                                                                                    // greyed
                             appendIds = appendIds + productId + "|";
                             expiryMap.put(productId, outputFormatter.format(bsbProductObject.get("expireTimestamp").asLong()));
                             buttonMap.put(productId, false);

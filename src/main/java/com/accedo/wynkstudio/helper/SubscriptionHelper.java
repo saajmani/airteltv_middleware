@@ -153,8 +153,7 @@ public class SubscriptionHelper {
 	}
 
 	public static String activateProduct(String uid, String productId, String deviceId, String deviceOs, String appVersion, HttpHeaders header) {
-            if (productId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
-								.asString())) {
+        if(isSingleVideoProduct(productId)) {
                 String offer_Ids = "";
                 String offerIdLive=null;
                 String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(uid, deviceId, deviceOs, appVersion);
@@ -167,9 +166,7 @@ public class SubscriptionHelper {
                             JsonArray offerpacks = offerstatus.get(i).asObject().get("packs").asArray();
                             for (int j = 0; j < offerpacks.size(); j++) {
                                 String offerId = offerpacks.get(j).asObject().get("partnerProductId").asString();
-                                String action = offerpacks.get(j).asObject().get("action").asString();
-                                if (offerId.equalsIgnoreCase(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("livetv_single_prod_id")
-								.asString())) {
+                            if(offerId.equalsIgnoreCase(productId)) {
                                     offer_Ids = "[" + String.valueOf(offerstatus.get(i).asObject().get("offerId").asInt()) + "]";
                                 offerIdLive = String.valueOf(offerstatus.get(i).asObject().get("offerId"));
                                     break;
@@ -449,6 +446,16 @@ public class SubscriptionHelper {
 		return response;
 	}
 
+    public static boolean isSingleVideoProduct(String productId) {
+        if(AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("singleVideoPacksList") != null) {
+            String[] ids = AppgridHelper.appGridMetadata.get("gift_products_def").asObject().get("singleVideoPacksList")
+                    .asString().split(",");
+            for(String id : ids)
+                if(id.equalsIgnoreCase(productId))
+                    return true;
+        }
+        return false;
+    }
 	public static Boolean checkHooqPackStatus(String userId, HttpHeaders headers) {
 		Boolean response = true;
 		String url = AppgridHelper.appGridMetadata.get("hooq_customer_status_url").asString();
