@@ -38,6 +38,7 @@ import com.accedo.wynkstudio.vo.ProductVO;
 import com.accedo.wynkstudio.vo.UserProfileVO;
 import com.eclipsesource.json.JsonArray;
 import com.eclipsesource.json.JsonObject;
+import com.eclipsesource.json.JsonValue;
 
 @Service
 @Transactional
@@ -522,7 +523,22 @@ public class SubscriptionServiceImpl implements SubscriptionService{
                                         }
 					responseArray.get(i).asObject().set("bundleCounter", limit);
 				}
-				responseJson.set("entries", responseArray);
+                JsonArray otherProds = new JsonArray();
+                JsonArray infinityProds = new JsonArray();
+                String svpPaidId = AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
+                        .get("livetv_paid_single_prod_id").asString();
+                List<String> svpIds = Arrays.asList(svpId, svpPaidId);
+                // infinity prods need to come above other prods
+                for(JsonValue prod : responseArray.asArray()) {
+                    String prodid = prod.asObject().get("id").asString();
+                    if(svpIds.contains(prodid))
+                        infinityProds.add(prod);
+                    else
+                        otherProds.add(prod);
+                }
+                for(JsonValue prod : otherProds.asArray())
+                    infinityProds.add(prod);
+                responseJson.set("entries", infinityProds);
 				response = responseJson.toString();
 			} else {
 				response = "{\"entries\":[]}";
