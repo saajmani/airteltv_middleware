@@ -458,7 +458,7 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 										.asBoolean());
 							}
                         }
-                        else if(productId.equals(svpId)
+                        else if(SubscriptionHelper.isSingleVideoProduct(productId)
                                 && bsbProductObject.get("expireTimestamp").asLong() > System.currentTimeMillis()) { // svp
                                                                                                                     // should
                                                                                                                     // be
