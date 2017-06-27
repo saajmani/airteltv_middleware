@@ -457,6 +457,13 @@ public class SubscriptionServiceImpl implements SubscriptionService{
 								}		
 								buttonMap.put(productId, subscriptionStatus.get("body").asObject().get("unsubscribe")
 										.asBoolean());
+                            }
+                            else if(SubscriptionHelper.isSingleVideoProduct(productId)
+                                    && bsbProductObject.get("expireTimestamp").asLong() > System.currentTimeMillis()) {
+                                appendIds = appendIds + productId + "|";
+                                expiryMap.put(productId,
+                                        outputFormatter.format(bsbProductObject.get("expireTimestamp").asLong()));
+                                buttonMap.put(productId, false);
 							}
                         }
                         else if(SubscriptionHelper.isSingleVideoProduct(productId)
