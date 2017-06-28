@@ -468,6 +468,8 @@ public class UserServiceImpl implements UserService {
                     long validity = offerObj.get("expireTimestamp").asLong();
                     airtelProduct.add("validity", String.valueOf(validity));
                     airtelProduct.set("state", offerObj.get("status").asString());
+            airtelProduct.set("noOfDaysLeft",
+                    TimeUnit.MILLISECONDS.toDays(validity) - TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis()));
             if(validity > System.currentTimeMillis()) {
                 airtelProduct.set("active", true);
             }
