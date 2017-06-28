@@ -463,12 +463,17 @@ public class UserServiceImpl implements UserService {
                 if (statusObject.get(airtelOfferId) != null
                         && statusObject.get(airtelOfferId).asObject().get("status").asString().equalsIgnoreCase("DEACTIVATED")) {
                     airtelProduct = JsonObject.readFrom(AppgridHelper.appGridMetadata.get("gift_products_def").asObject()
-                                                .get("airteltv_premiumpack").asString());
+                    .get("airteltv_premiumpack").asString());
                     JsonObject offerObj = statusObject.get(airtelOfferId).asObject();
                     long validity = offerObj.get("expireTimestamp").asLong();
                     airtelProduct.add("validity", String.valueOf(validity));
                     airtelProduct.set("state", offerObj.get("status").asString());
-                    airtelProduct.set("active", offerObj.get("status").asString().equalsIgnoreCase("ACTIVE"));
+            if(validity > System.currentTimeMillis()) {
+                airtelProduct.set("active", true);
+            }
+            else {
+                airtelProduct.set("active", false);
+            }
                     productsList.add(airtelProduct);
                 } else if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
                     JsonArray offerstatus = offerResponse.get("offerStatus").asArray();
