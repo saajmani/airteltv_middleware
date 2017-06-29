@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -452,8 +453,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getGiftProductsInfo(String userId, String token, String deviceId, String deviceOs, String appVersion) {
-		JsonArray productsList = new JsonArray();
+
+        JsonArray productsList = new JsonArray();
 		Boolean trialFlag = false;
+        if(StringUtils.isNotEmpty(token)) {
                 String bsbResponse = SubscriptionHelper.checkPackStatus(userId, token, headers);
                 JsonObject statusObject = JsonObject.readFrom(bsbResponse);
                 String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
@@ -524,7 +527,7 @@ public class UserServiceImpl implements UserService {
                         }
                     }
                 }
-           
+        }
                 List<ProductVO> userProducts = productDao.getProductsByUserId(userId);
 		for (int i = 0; i < userProducts.size(); i++) {
 			if (userProducts.get(i).getCpId().equalsIgnoreCase("hooq")
@@ -1811,6 +1814,7 @@ public class UserServiceImpl implements UserService {
                                     productsArray.add(prodObj.asObject());
 			}
 		
+            if(StringUtils.isNotEmpty(deviceOs) && StringUtils.isNotEmpty(appVersion)) {
                         String bsbAvailableOffers = SubscriptionHelper.getavailableOffer(userId, deviceId, deviceOs, appVersion);
                         JsonObject offerResponse = JsonObject.readFrom(bsbAvailableOffers);
                         if (offerResponse.get("offerStatus").asArray() != null && offerResponse.get("offerStatus").asArray().size() > 0) {
@@ -1844,7 +1848,7 @@ public class UserServiceImpl implements UserService {
                                 }
                             }
                         }
-			
+            }
 //			jsonObject.add("rails", railsArray);
                         jsonObject.add("products", productsJsonArray);
 			jsonObject.add("rails", cardsArray);
